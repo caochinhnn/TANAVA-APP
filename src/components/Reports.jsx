@@ -38,52 +38,67 @@ const Reports = () => {
             // Create Workbook
             const wb = XLSX.utils.book_new();
 
-            // Format Data for Readability
+            // Format Data for Readability (Human-Centric)
             const customersSheet = (customersAll || []).map(c => ({
-                'ID Hệ Thống': c.id,
                 'Tên Khách Hàng': c.name,
+                'Mã KH': c.code,
+                'MST': c.tax_id,
                 'Số Điện Thoại': c.phone,
+                'Email': c.email,
                 'Địa Chỉ': c.address,
-                'Ghi Chú': c.notes,
-                'Ngày Tạo': c.created_at
+                'Người Nhận': c.receiver,
+                'Người Phụ Trách': c.pic
             }));
 
             const productsSheet = (productsAll || []).map(p => ({
-                'ID Hệ Thống': p.id,
                 'Tên Sản Phẩm': p.name,
                 'Đơn Vị Tính': p.unit,
-                'Đơn Giá Mặc Định': p.default_price,
-                'Ngày Tạo': p.created_at
+                'Đơn Giá Mặc Định': p.default_price
             }));
 
             const ordersSheet = (ordersAll || []).map(o => {
                 const customer = (customersAll || []).find(c => c.id === o.customer_id);
                 return {
-                    'ID Hệ Thống': o.id,
                     'Mã Đơn Hàng': o.order_code,
                     'Ngày Giao Hàng': o.order_date,
                     'Tên Khách Hàng': customer ? customer.name : 'N/A',
                     'Tổng Tiền': o.total_amount,
                     'Trạng Thái': o.status,
-                    'Ghi Chú': o.notes,
-                    'Ngày Tạo': o.created_at
+                    'Ghi Chú': o.notes
                 };
             });
 
-            const itemsSheet = (itemsAll || []).map(item => {
+            // Prepare Detailed Items Sheet with Sorting
+            const itemsFormatted = (itemsAll || []).map(item => {
                 const order = (ordersAll || []).find(o => o.id === item.order_id);
                 const product = (productsAll || []).find(p => p.id === item.product_id);
+                const customer = order ? (customersAll || []).find(c => c.id === order.customer_id) : null;
+
                 return {
-                    'ID Hệ Thống': item.id,
-                    'Mã Đơn Hàng': order ? order.order_code : 'N/A',
+                    'Ngày Giao': order ? order.order_date : 'N/A',
+                    'Tên Khách Hàng': customer ? customer.name : 'N/A',
+                    'Mã Đơn': order ? order.order_code : 'N/A',
                     'Tên Sản Phẩm': product ? product.name : 'N/A',
                     'ĐVT': product ? product.unit : 'N/A',
-                    'Số Lượng Yêu Cầu': item.quantity_requested,
-                    'Số Lượng Thực Tế': item.quantity_actual,
+                    'SL Yêu Cầu': item.quantity_requested,
+                    'SL Thực Nhận': item.quantity_actual,
                     'Đơn Giá': item.unit_price,
-                    'Thành Tiền': item.total_price,
-                    'Ngày Tạo': item.created_at
+                    'Thành Tiền': item.total_price
                 };
+            });
+
+            // Advanced Sorting for Items: Date (Desc), then Customer (A-Z), then Order Code
+            itemsFormatted.sort((a, b) => {
+                // 1. Date (Newest first)
+                if (b['Ngày Giao'] !== a['Ngày Giao']) {
+                    return b['Ngày Giao'].localeCompare(a['Ngày Giao']);
+                }
+                // 2. Customer Name (A-Z)
+                if (a['Tên Khách Hàng'] !== b['Tên Khách Hàng']) {
+                    return a['Tên Khách Hàng'].localeCompare(b['Tên Khách Hàng']);
+                }
+                // 3. Order Code (01, 02...)
+                return a['Mã Đơn'].localeCompare(b['Mã Đơn']);
             });
 
             const pricesSheet = (pricesAll || []).map(price => {
@@ -92,8 +107,7 @@ const Reports = () => {
                 return {
                     'Tên Khách Hàng': customer ? customer.name : 'N/A',
                     'Tên Sản Phẩm': product ? product.name : 'N/A',
-                    'Giá Riêng': price.price,
-                    'Ngày Cập Nhật': price.created_at
+                    'Giá Riêng': price.price
                 };
             });
 
@@ -101,7 +115,7 @@ const Reports = () => {
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(customersSheet), "DanhSachKhachHang");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(productsSheet), "DanhSachSanPham");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ordersSheet), "ToanBoDonHang");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemsSheet), "ChiTietDonHang");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemsFormatted), "ChiTietDonHang");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pricesSheet), "BangGiaKhachHang");
 
             // Export
