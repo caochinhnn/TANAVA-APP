@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Search, Download, FileSpreadsheet } from 'lucide-react';
+import { Search, Download, FileSpreadsheet, Database } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 import { getLocalDateString } from '../utils/dateUtils';
@@ -9,12 +9,53 @@ const Reports = () => {
     const [orders, setOrders] = useState([]);
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [backupLoading, setBackupLoading] = useState(false);
     const [timeFilter, setTimeFilter] = useState('month');
     const [selectedCustomerId, setSelectedCustomerId] = useState('all');
     const [customDates, setCustomDates] = useState({
         start: getLocalDateString(),
         end: getLocalDateString()
     });
+
+    const handleFullBackup = async () => {
+        setBackupLoading(true);
+        try {
+            // Fetch all data from all relevant tables
+            const [
+                { data: customersAll },
+                { data: productsAll },
+                { data: ordersAll },
+                { data: itemsAll },
+                { data: pricesAll }
+            ] = await Promise.all([
+                supabase.from('customers').select('*').order('name'),
+                supabase.from('products').select('*').order('name'),
+                supabase.from('orders').select('*').order('order_date', { ascending: false }),
+                supabase.from('order_items').select('*'),
+                supabase.from('customer_product_prices').select('*')
+            ]);
+
+            // Create Workbook
+            const wb = XLSX.utils.book_new();
+
+            // Add Sheets
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(customersAll || []), "DanhSachKhachHang");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(productsAll || []), "DanhSachSanPham");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ordersAll || []), "ToanBoDonHang");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemsAll || []), "ChiTietDonHang");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pricesAll || []), "BangGiaKhachHang");
+
+            // Export
+            const fileName = `TANAVA_BACKUP_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            alert('Đã sao lưu toàn bộ dữ liệu thành công!');
+        } catch (error) {
+            console.error('Backup error:', error);
+            alert('Có lỗi khi sao lưu dữ liệu!');
+        } finally {
+            setBackupLoading(false);
+        }
+    };
 
     useEffect(() => {
         fetchOrders();
