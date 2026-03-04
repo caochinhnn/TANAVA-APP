@@ -68,13 +68,14 @@ const Reports = () => {
                 };
             });
 
-            // Prepare Detailed Items Sheet with Sorting
-            const itemsFormatted = (itemsAll || []).map(item => {
+            // Prepare Detailed Items Data with raw values for sorting
+            const itemsRaw = (itemsAll || []).map(item => {
                 const order = (ordersAll || []).find(o => o.id === item.order_id);
                 const product = (productsAll || []).find(p => p.id === item.product_id);
                 const customer = order ? (customersAll || []).find(c => c.id === order.customer_id) : null;
 
                 return {
+                    rawDate: order ? order.order_date : '0000-00-00',
                     'Ngày Giao': formatDateVN(order ? order.order_date : 'N/A'),
                     'Tên Khách Hàng': customer ? customer.name : 'N/A',
                     'Mã Đơn': order ? order.order_code : 'N/A',
@@ -88,10 +89,10 @@ const Reports = () => {
             });
 
             // Advanced Sorting for Items: Date (Desc), then Customer (A-Z), then Order Code
-            itemsFormatted.sort((a, b) => {
-                // 1. Date (Newest first)
-                if (b['Ngày Giao'] !== a['Ngày Giao']) {
-                    return b['Ngày Giao'].localeCompare(a['Ngày Giao']);
+            itemsRaw.sort((a, b) => {
+                // 1. Date (Newest first) - use rawDate (YYYY-MM-DD)
+                if (b.rawDate !== a.rawDate) {
+                    return b.rawDate.localeCompare(a.rawDate);
                 }
                 // 2. Customer Name (A-Z)
                 if (a['Tên Khách Hàng'] !== b['Tên Khách Hàng']) {
@@ -100,6 +101,9 @@ const Reports = () => {
                 // 3. Order Code (01, 02...)
                 return a['Mã Đơn'].localeCompare(b['Mã Đơn']);
             });
+
+            // Final Sheet Data (remove rawDate)
+            const itemsFinalSheet = itemsRaw.map(({ rawDate, ...rest }) => rest);
 
             const pricesSheet = (pricesAll || []).map(price => {
                 const customer = (customersAll || []).find(c => c.id === price.customer_id);
@@ -115,7 +119,7 @@ const Reports = () => {
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(customersSheet), "DanhSachKhachHang");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(productsSheet), "DanhSachSanPham");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ordersSheet), "ToanBoDonHang");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemsFormatted), "ChiTietDonHang");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemsFinalSheet), "ChiTietDonHang");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pricesSheet), "BangGiaKhachHang");
 
             // Export
