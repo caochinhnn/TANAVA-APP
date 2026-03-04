@@ -38,12 +38,71 @@ const Reports = () => {
             // Create Workbook
             const wb = XLSX.utils.book_new();
 
+            // Format Data for Readability
+            const customersSheet = (customersAll || []).map(c => ({
+                'ID Hệ Thống': c.id,
+                'Tên Khách Hàng': c.name,
+                'Số Điện Thoại': c.phone,
+                'Địa Chỉ': c.address,
+                'Ghi Chú': c.notes,
+                'Ngày Tạo': c.created_at
+            }));
+
+            const productsSheet = (productsAll || []).map(p => ({
+                'ID Hệ Thống': p.id,
+                'Tên Sản Phẩm': p.name,
+                'Đơn Vị Tính': p.unit,
+                'Đơn Giá Mặc Định': p.default_price,
+                'Ngày Tạo': p.created_at
+            }));
+
+            const ordersSheet = (ordersAll || []).map(o => {
+                const customer = (customersAll || []).find(c => c.id === o.customer_id);
+                return {
+                    'ID Hệ Thống': o.id,
+                    'Mã Đơn Hàng': o.order_code,
+                    'Ngày Giao Hàng': o.order_date,
+                    'Tên Khách Hàng': customer ? customer.name : 'N/A',
+                    'Tổng Tiền': o.total_amount,
+                    'Trạng Thái': o.status,
+                    'Ghi Chú': o.notes,
+                    'Ngày Tạo': o.created_at
+                };
+            });
+
+            const itemsSheet = (itemsAll || []).map(item => {
+                const order = (ordersAll || []).find(o => o.id === item.order_id);
+                const product = (productsAll || []).find(p => p.id === item.product_id);
+                return {
+                    'ID Hệ Thống': item.id,
+                    'Mã Đơn Hàng': order ? order.order_code : 'N/A',
+                    'Tên Sản Phẩm': product ? product.name : 'N/A',
+                    'ĐVT': product ? product.unit : 'N/A',
+                    'Số Lượng Yêu Cầu': item.quantity_requested,
+                    'Số Lượng Thực Tế': item.quantity_actual,
+                    'Đơn Giá': item.unit_price,
+                    'Thành Tiền': item.total_price,
+                    'Ngày Tạo': item.created_at
+                };
+            });
+
+            const pricesSheet = (pricesAll || []).map(price => {
+                const customer = (customersAll || []).find(c => c.id === price.customer_id);
+                const product = (productsAll || []).find(p => p.id === price.product_id);
+                return {
+                    'Tên Khách Hàng': customer ? customer.name : 'N/A',
+                    'Tên Sản Phẩm': product ? product.name : 'N/A',
+                    'Giá Riêng': price.price,
+                    'Ngày Cập Nhật': price.created_at
+                };
+            });
+
             // Add Sheets
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(customersAll || []), "DanhSachKhachHang");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(productsAll || []), "DanhSachSanPham");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ordersAll || []), "ToanBoDonHang");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemsAll || []), "ChiTietDonHang");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pricesAll || []), "BangGiaKhachHang");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(customersSheet), "DanhSachKhachHang");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(productsSheet), "DanhSachSanPham");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ordersSheet), "ToanBoDonHang");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemsSheet), "ChiTietDonHang");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pricesSheet), "BangGiaKhachHang");
 
             // Export
             const fileName = `TANAVA_BACKUP_${new Date().toISOString().split('T')[0]}.xlsx`;
