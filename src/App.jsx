@@ -1,12 +1,26 @@
-import React, { useState } from 'react';
-import Customers from './components/Customers';
-import Products from './components/Products';
-import Orders from './components/Orders';
-import Reports from './components/Reports';
-import Dashboard from './components/Dashboard';
+import { supabase } from './supabaseClient';
+import Login from './components/Login';
+import { LogOut } from 'lucide-react';
 
 function App() {
+  const [session, setSession] = useState(null);
   const [activeTab, setActiveTab] = useState('customers');
+
+  React.useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
   const tabs = [
     { id: 'customers', label: 'KHÁCH HÀNG' },
@@ -15,6 +29,10 @@ function App() {
     { id: 'reports', label: 'BÁO CÁO' },
     { id: 'dashboard', label: 'DASHBOARD' },
   ];
+
+  if (!session) {
+    return <Login />;
+  }
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -29,7 +47,27 @@ function App() {
 
   return (
     <div className="container">
-      <header style={{ marginBottom: '30px', textAlign: 'center', background: 'white', padding: '20px', borderRadius: '0 0 15px 15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+      <header style={{ position: 'relative', marginBottom: '30px', textAlign: 'center', background: 'white', padding: '20px', borderRadius: '0 0 15px 15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+        <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <span style={{ fontSize: '12px', color: '#666' }}>{session.user.email}</span>
+          <button
+            onClick={handleLogout}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              background: '#f5f5f5',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              color: '#444'
+            }}
+          >
+            <LogOut size={16} /> Thoát
+          </button>
+        </div>
         <h1 style={{ color: 'var(--primary-orange)', fontSize: '36px', letterSpacing: '3px', margin: 0 }}>TANAVA APP</h1>
         <p style={{ color: '#000', fontWeight: 'bold', fontSize: '14px', marginTop: '5px' }}>HỆ THỐNG QUẢN LÝ THỰC PHẨM TƯƠI SỐNG</p>
       </header>
