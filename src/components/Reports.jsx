@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 import { Search, Download, FileSpreadsheet, Database } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-import { getLocalDateString } from '../utils/dateUtils';
+import { getLocalDateString, formatDateVN } from '../utils/dateUtils';
 
 const Reports = () => {
     const [orders, setOrders] = useState([]);
@@ -60,7 +60,7 @@ const Reports = () => {
                 const customer = (customersAll || []).find(c => c.id === o.customer_id);
                 return {
                     'Mã Đơn Hàng': o.order_code,
-                    'Ngày Giao Hàng': o.order_date,
+                    'Ngày Giao Hàng': formatDateVN(o.order_date),
                     'Tên Khách Hàng': customer ? customer.name : 'N/A',
                     'Tổng Tiền': o.total_amount,
                     'Trạng Thái': o.status,
@@ -75,7 +75,7 @@ const Reports = () => {
                 const customer = order ? (customersAll || []).find(c => c.id === order.customer_id) : null;
 
                 return {
-                    'Ngày Giao': order ? order.order_date : 'N/A',
+                    'Ngày Giao': formatDateVN(order ? order.order_date : 'N/A'),
                     'Tên Khách Hàng': customer ? customer.name : 'N/A',
                     'Mã Đơn': order ? order.order_code : 'N/A',
                     'Tên Sản Phẩm': product ? product.name : 'N/A',
