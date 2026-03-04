@@ -271,6 +271,40 @@ const Reports = () => {
                     </tfoot>
                 </table>
             </div>
+            {/* Data Backup Section */}
+            <div style={{
+                marginTop: '40px',
+                padding: '30px',
+                background: '#F8F9FA',
+                borderRadius: '15px',
+                border: '1px solid #E9ECEF',
+                textAlign: 'center'
+            }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '50px', height: '50px', background: '#E3F2FD', borderRadius: '12px', marginBottom: '15px' }}>
+                    <Database color="#1976D2" size={24} />
+                </div>
+                <h3 style={{ margin: '0 0 10px 0', color: '#333' }}>Hệ Thống Sao Lưu Dự Phòng</h3>
+                <p style={{ color: '#666', fontSize: '14px', maxWidth: '500px', margin: '0 auto 20px' }}>
+                    Tải về toàn bộ dữ liệu (Khách hàng, Sản phẩm, Bảng giá, Đơn hàng) dưới dạng file Excel để lưu trữ an toàn trên máy tính cá nhân hoặc Google Drive.
+                </p>
+                <button
+                    onClick={handleFullBackup}
+                    disabled={backupLoading}
+                    className="btn btn-primary"
+                    style={{
+                        background: '#1976D2',
+                        borderColor: '#1976D2',
+                        padding: '12px 25px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        margin: '0 auto'
+                    }}
+                >
+                    <Download size={18} /> {backupLoading ? 'Đang xử lý...' : 'SAO LƯU TOÀN BỘ DỮ LIỆU'}
+                </button>
+                <p style={{ marginTop: '15px', fontSize: '12px', color: '#AAA' }}>Chúng tôi khuyên bạn nên thực hiện sao lưu ít nhất 1 lần/tuần.</p>
+            </div>
         </div>
     );
 };
