@@ -1,12 +1,18 @@
+import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import Login from './components/Login';
+import Customers from './components/Customers';
+import Products from './components/Products';
+import Orders from './components/Orders';
+import Reports from './components/Reports';
+import Dashboard from './components/Dashboard';
 import { LogOut } from 'lucide-react';
 
 function App() {
   const [session, setSession] = useState(null);
   const [activeTab, setActiveTab] = useState('customers');
 
-  React.useEffect(() => {
+  useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
