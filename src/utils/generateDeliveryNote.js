@@ -139,7 +139,7 @@ export const generateDeliveryNote = async (order) => {
         const isQtyProvided = qtyActual !== null && qtyActual !== undefined && qtyActual !== 0;
 
         if (isQtyProvided) hasActualQty = true;
-        const rowTotal = isQtyProvided ? item.total_price : null;
+        const rowTotal = isQtyProvided ? Math.round(item.total_price) : null;
         if (rowTotal) grandTotal += rowTotal;
 
         const rowData = [
@@ -197,38 +197,53 @@ export const generateDeliveryNote = async (order) => {
 
     // ===== TỔNG TIỀN =====
     if (hasActualQty) {
-        const totalLabel = 'Tổng cộng';
-        const totalVal = formatNum(grandTotal);
+        const subtotalLabel = 'Tiền hàng';
+        const subtotalVal = formatNum(grandTotal);
+        const extraCharge = Number(order.extra_charge) || 0;
+        const extraLabel = order.extra_charge_notes || 'Phí bổ sung';
+        const extraVal = formatNum(extraCharge);
+        const finalTotalLabel = 'Tổng cộng';
+        const finalTotalVal = formatNum(grandTotal + extraCharge);
 
-        const totalRowBottomY = currentY - 18;
         const totalBoxWidth = colWidths[5] + colWidths[6];
         const totalBoxX = startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4];
 
-        // Draw row for total
-        page.drawRectangle({
-            x: totalBoxX,
-            y: totalRowBottomY,
-            width: totalBoxWidth,
-            height: rowHeight,
-            borderWidth: 0.5,
-            borderColor: rgb(0, 0, 0)
-        });
+        // 1. Tiền hàng
+        let totalRowBottomY = currentY - 18;
+        page.drawRectangle({ x: totalBoxX, y: totalRowBottomY, width: totalBoxWidth, height: rowHeight, borderWidth: 0.5, borderColor: rgb(0, 0, 0) });
+        page.drawLine({ start: { x: totalBoxX + colWidths[5], y: totalRowBottomY }, end: { x: totalBoxX + colWidths[5], y: totalRowBottomY + rowHeight }, thickness: 0.5, color: rgb(0, 0, 0) });
 
-        // Vertical split line for total box
-        page.drawLine({
-            start: { x: totalBoxX + colWidths[5], y: totalRowBottomY },
-            end: { x: totalBoxX + colWidths[5], y: totalRowBottomY + rowHeight },
-            thickness: 0.5,
-            color: rgb(0, 0, 0)
-        });
+        let labelWidth = boldFont.widthOfTextAtSize(subtotalLabel, 9);
+        let yPos = totalRowBottomY + (rowHeight - 9) / 2 + 3;
+        page.drawText(subtotalLabel, { x: totalBoxX + (colWidths[5] - labelWidth) / 2, y: yPos, size: 9, font: boldFont });
+        let valWidth = boldFont.widthOfTextAtSize(subtotalVal, 9);
+        page.drawText(subtotalVal, { x: width - margin - valWidth - 5, y: yPos, size: 9, font: boldFont });
+        currentY -= rowHeight;
 
-        const labelWidth = boldFont.widthOfTextAtSize(totalLabel, 9);
-        const yPos = totalRowBottomY + (rowHeight - 9) / 2 + 3;
-        page.drawText(totalLabel, { x: totalBoxX + (colWidths[5] - labelWidth) / 2, y: yPos, size: 9, font: boldFont });
+        // 2. Phí bổ sung (Conditional)
+        if (extraCharge > 0) {
+            totalRowBottomY = currentY - 18;
+            page.drawRectangle({ x: totalBoxX, y: totalRowBottomY, width: totalBoxWidth, height: rowHeight, borderWidth: 0.5, borderColor: rgb(0, 0, 0) });
+            page.drawLine({ start: { x: totalBoxX + colWidths[5], y: totalRowBottomY }, end: { x: totalBoxX + colWidths[5], y: totalRowBottomY + rowHeight }, thickness: 0.5, color: rgb(0, 0, 0) });
 
-        const valWidth = boldFont.widthOfTextAtSize(totalVal, 9);
-        page.drawText(totalVal, { x: width - margin - valWidth - 5, y: yPos, size: 9, font: boldFont });
+            labelWidth = boldFont.widthOfTextAtSize(extraLabel, 9);
+            yPos = totalRowBottomY + (rowHeight - 9) / 2 + 3;
+            page.drawText(extraLabel, { x: totalBoxX + (colWidths[5] - labelWidth) / 2, y: yPos, size: 9, font: boldFont });
+            valWidth = boldFont.widthOfTextAtSize(extraVal, 9);
+            page.drawText(extraVal, { x: width - margin - valWidth - 5, y: yPos, size: 9, font: boldFont });
+            currentY -= rowHeight;
+        }
 
+        // 3. Tổng cộng cuối cùng
+        totalRowBottomY = currentY - 18;
+        page.drawRectangle({ x: totalBoxX, y: totalRowBottomY, width: totalBoxWidth, height: rowHeight, borderWidth: 0.5, borderColor: rgb(0, 0, 0), color: rgb(0.95, 0.95, 0.95) });
+        page.drawLine({ start: { x: totalBoxX + colWidths[5], y: totalRowBottomY }, end: { x: totalBoxX + colWidths[5], y: totalRowBottomY + rowHeight }, thickness: 0.5, color: rgb(0, 0, 0) });
+
+        labelWidth = boldFont.widthOfTextAtSize(finalTotalLabel, 9);
+        yPos = totalRowBottomY + (rowHeight - 9) / 2 + 3;
+        page.drawText(finalTotalLabel, { x: totalBoxX + (colWidths[5] - labelWidth) / 2, y: yPos, size: 9, font: boldFont });
+        valWidth = boldFont.widthOfTextAtSize(finalTotalVal, 9);
+        page.drawText(finalTotalVal, { x: width - margin - valWidth - 5, y: yPos, size: 9, font: boldFont });
         currentY -= rowHeight;
     }
 

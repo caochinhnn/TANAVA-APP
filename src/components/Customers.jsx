@@ -119,7 +119,7 @@ const Customers = () => {
     );
 
     return (
-        <div className="tab-content">
+        <div className="tab-content glass-panel" style={{ padding: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
                 <h2>QUẢN LÝ KHÁCH HÀNG</h2>
                 <button className="btn btn-primary" onClick={openAddModal} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -127,15 +127,15 @@ const Customers = () => {
                 </button>
             </div>
 
-            <div style={{ position: 'relative', marginBottom: '20px' }}>
+            <div style={{ position: 'relative', marginBottom: '25px' }}>
                 <input
                     type="text"
                     placeholder="Tìm kiếm theo tên hoặc mã..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ paddingLeft: '35px', width: '100%', height: '40px', border: '1px solid #ddd', borderRadius: '4px' }}
+                    style={{ paddingLeft: '45px' }}
                 />
-                <Search size={20} style={{ position: 'absolute', left: '10px', top: '10px', color: '#888' }} />
+                <Search size={20} style={{ position: 'absolute', left: '15px', top: '12px', color: 'var(--text-muted)' }} />
             </div>
 
             {loading ? (
@@ -172,19 +172,19 @@ const Customers = () => {
                                 </td>
 
                                 {/* Information Overlay on Hover */}
-                                <div className="details-tooltip">
-                                    <h4 style={{ color: 'var(--primary-orange)', borderBottom: '1px solid #eee', paddingBottom: '5px', marginBottom: '10px' }}>
+                                <div className="details-tooltip glass-panel" style={{ background: 'rgba(20, 22, 26, 0.95)', border: '1px solid var(--glass-border)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                                    <h4 style={{ color: 'var(--primary-orange)', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '12px' }}>
                                         Chi Tiết Khách Hàng
                                     </h4>
-                                    <p><strong>Tên:</strong> {customer.name}</p>
-                                    <p><strong>Mã:</strong> {customer.code}</p>
-                                    <p><strong>Địa chỉ:</strong> {customer.address}</p>
-                                    <p><strong>MST:</strong> {customer.tax_id}</p>
-                                    <p><strong>Địa điểm giao:</strong> {customer.delivery_location}</p>
-                                    <p><strong>Người nhận:</strong> {customer.receiver}</p>
-                                    <p><strong>Người phụ trách:</strong> {customer.pic}</p>
-                                    <p><strong>SĐT:</strong> {customer.phone}</p>
-                                    <p><strong>Email:</strong> {customer.email}</p>
+                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Tên:</strong> {customer.name}</p>
+                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Mã:</strong> {customer.code}</p>
+                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Địa chỉ:</strong> {customer.address}</p>
+                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>MST:</strong> {customer.tax_id}</p>
+                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Địa điểm giao:</strong> {customer.delivery_location}</p>
+                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Người nhận:</strong> {customer.receiver}</p>
+                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Người phụ trách:</strong> {customer.pic}</p>
+                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>SĐT:</strong> {customer.phone}</p>
+                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Email:</strong> {customer.email}</p>
                                 </div>
                             </tr>
                         ))}

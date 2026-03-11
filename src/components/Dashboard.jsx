@@ -99,19 +99,19 @@ const Dashboard = () => {
     const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(val);
 
     return (
-        <div className="tab-content">
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
+        <div className="tab-content glass-panel" style={{ padding: '30px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px', alignItems: 'center' }}>
                 <h2>TỔNG QUAN KINH DOANH</h2>
                 <div style={{ display: 'flex', gap: '15px' }}>
-                    <select value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)}>
+                    <select value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)} style={{ width: 'auto', minWidth: '150px' }}>
                         <option value="day">Hôm nay</option>
                         <option value="7days">7 Ngày qua</option>
                         <option value="month">Tháng này</option>
                         <option value="year">Năm này</option>
                     </select>
-                    <select value={selectedCustomerId} onChange={(e) => setSelectedCustomerId(e.target.value)}>
+                    <select value={selectedCustomerId} onChange={(e) => setSelectedCustomerId(e.target.value)} style={{ width: 'auto', minWidth: '200px' }}>
                         <option value="all">Tất cả khách hàng</option>
-                        {customers.map(c => <option key={c.id} value={c.id}>{c.name.substring(0, 15)}...</option>)}
+                        {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                 </div>
             </div>
@@ -120,22 +120,27 @@ const Dashboard = () => {
                 <p>Đang tải dữ liệu...</p>
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginTop: '20px' }}>
-                    <div style={{ background: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
-                        <h4 style={{ marginBottom: '20px', textAlign: 'center' }}>DOANH THU THEO THỜI GIAN</h4>
+                    <div className="glass-panel" style={{ background: 'rgba(0,0,0,0.2)', padding: '25px', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+                        <h4 style={{ marginBottom: '25px', textAlign: 'center', color: 'var(--primary-orange-light)', letterSpacing: '1px' }}>DOANH THU THEO THỜI GIAN</h4>
                         <div style={{ height: '300px' }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={data.bar}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="name" />
-                                    <YAxis tickFormatter={formatCurrency} />
-                                    <Tooltip formatter={(value) => new Intl.NumberFormat('vi-VN').format(value)} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                                    <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} />
+                                    <YAxis tickFormatter={formatCurrency} stroke="var(--text-muted)" fontSize={12} />
+                                    <Tooltip
+                                        contentStyle={{ background: '#1a1c22', border: '1px solid var(--glass-border)', borderRadius: '8px' }}
+                                        itemStyle={{ color: 'white' }}
+                                        labelStyle={{ color: 'var(--primary-orange-light)' }}
+                                        formatter={(value) => new Intl.NumberFormat('vi-VN').format(value)}
+                                    />
                                     <Legend />
                                     <Bar
                                         dataKey="value"
                                         name="Doanh thu (VNĐ)"
-                                        radius={[4, 4, 0, 0]}
+                                        radius={[6, 6, 0, 0]}
                                         barSize={30}
-                                        label={{ position: 'top', formatter: (val) => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(val), fontSize: 10 }}
+                                        label={{ position: 'top', fill: 'white', formatter: (val) => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(val), fontSize: 10 }}
                                     >
                                         {data.bar.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -146,8 +151,8 @@ const Dashboard = () => {
                         </div>
                     </div>
 
-                    <div style={{ background: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
-                        <h4 style={{ marginBottom: '20px', textAlign: 'center' }}>TỶ TRỌNG DOANH THU KHÁCH HÀNG (TOP 5)</h4>
+                    <div className="glass-panel" style={{ background: 'rgba(0,0,0,0.2)', padding: '25px', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+                        <h4 style={{ marginBottom: '25px', textAlign: 'center', color: 'var(--primary-orange-light)', letterSpacing: '1px' }}>TỶ TRỌNG DOANH THU KHÁCH HÀNG (TOP 5)</h4>
                         <div style={{ height: '300px' }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
@@ -158,22 +163,26 @@ const Dashboard = () => {
                                         outerRadius={80}
                                         fill="#8884d8"
                                         dataKey="value"
-                                        label={({ name, percent, shortName }) => `${shortName} ${(percent * 100).toFixed(0)}%`} // Show short name and % inside/nearby
+                                        label={({ name, percent, shortName }) => `${shortName} ${(percent * 100).toFixed(0)}%`}
                                         labelLine={true}
                                     >
                                         {data.pie.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
-                                    <Tooltip formatter={(value) => new Intl.NumberFormat('vi-VN').format(value)} />
+                                    <Tooltip
+                                        contentStyle={{ background: '#1a1c22', border: '1px solid var(--glass-border)', borderRadius: '8px' }}
+                                        itemStyle={{ color: 'white' }}
+                                        formatter={(value) => new Intl.NumberFormat('vi-VN').format(value)}
+                                    />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center', marginTop: '10px' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center', marginTop: '15px' }}>
                             {data.pie.map((entry, index) => (
-                                <div key={index} style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <div style={{ width: '12px', height: '12px', background: COLORS[index % COLORS.length] }}></div>
-                                    <span>{entry.shortName}: {entry.name}</span>
+                                <div key={index} style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <div style={{ width: '12px', height: '12px', background: COLORS[index % COLORS.length], borderRadius: '3px' }}></div>
+                                    <span style={{ color: 'white' }}>{entry.shortName}: {entry.name}</span>
                                 </div>
                             ))}
                         </div>
@@ -181,14 +190,14 @@ const Dashboard = () => {
                 </div>
             )}
 
-            <div style={{ marginTop: '30px', background: 'var(--primary-orange)', padding: '20px', borderRadius: '8px', color: 'white', display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
+            <div className="glass-panel" style={{ marginTop: '30px', background: 'linear-gradient(135deg, var(--primary-orange) 0%, #FFB347 100%)', padding: '30px', color: 'white', display: 'flex', justifyContent: 'space-around', textAlign: 'center', boxShadow: '0 10px 30px rgba(255, 140, 0, 0.3)' }}>
                 <div>
-                    <p style={{ fontSize: '14px', opacity: 0.9 }}>Tổng doanh thu ước tính</p>
-                    <h2 style={{ fontSize: '28px' }}>{new Intl.NumberFormat('vi-VN').format(data.bar.reduce((sum, item) => sum + item.value, 0))} VNĐ</h2>
+                    <p style={{ fontSize: '14px', opacity: 0.9, letterSpacing: '1px' }}>TỔNG DOANH THU ƯỚC TÍNH</p>
+                    <h2 style={{ fontSize: '32px', fontWeight: '900' }}>{new Intl.NumberFormat('vi-VN').format(data.bar.reduce((sum, item) => sum + item.value, 0))} VNĐ</h2>
                 </div>
-                <div>
-                    <p style={{ fontSize: '14px', opacity: 0.9 }}>Số lượng đơn hàng</p>
-                    <h2 style={{ fontSize: '28px' }}>{data.orderCount} Đơn</h2>
+                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '50px' }}>
+                    <p style={{ fontSize: '14px', opacity: 0.9, letterSpacing: '1px' }}>SỐ LƯỢNG ĐƠN HÀNG</p>
+                    <h2 style={{ fontSize: '32px', fontWeight: '900' }}>{data.orderCount} ĐƠN</h2>
                 </div>
             </div>
         </div>

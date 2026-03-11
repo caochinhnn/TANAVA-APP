@@ -62,9 +62,23 @@ const Reports = () => {
                     'Mã Đơn Hàng': o.order_code,
                     'Ngày Giao Hàng': formatDateVN(o.order_date),
                     'Tên Khách Hàng': customer ? customer.name : 'N/A',
-                    'Tổng Tiền': o.total_amount,
+                    'Tiền Hàng': o.total_amount,
+                    'Phí Bổ Sung': o.extra_charge || 0,
+                    'Tổng Cộng': (o.total_amount || 0) + (o.extra_charge || 0),
                     'Trạng Thái': o.status,
-                    'Ghi Chú': o.notes
+                    'Ghi Chú': o.notes,
+                    'Ghi Chú Phí': o.extra_charge_notes
+                };
+            });
+
+            const extraChargesSheet = (ordersAll || []).filter(o => o.extra_charge > 0).map(o => {
+                const customer = (customersAll || []).find(c => c.id === o.customer_id);
+                return {
+                    'Ngày Giao': formatDateVN(o.order_date),
+                    'Khách Hàng': customer ? customer.name : 'N/A',
+                    'Mã Đơn': o.order_code,
+                    'Nội Dung Phí': o.extra_charge_notes || 'Phí bổ sung',
+                    'Số Tiền': o.extra_charge
                 };
             });
 
@@ -120,6 +134,9 @@ const Reports = () => {
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(productsSheet), "DanhSachSanPham");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ordersSheet), "ToanBoDonHang");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemsFinalSheet), "ChiTietDonHang");
+            if (extraChargesSheet.length > 0) {
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(extraChargesSheet), "ChiPhiKhac");
+            }
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pricesSheet), "BangGiaKhachHang");
 
             // Export
@@ -228,13 +245,15 @@ const Reports = () => {
         if (!aggregatedDataMap[key]) {
             aggregatedDataMap[key] = { ...item };
         } else {
-            aggregatedDataMap[key].qty += item.qty;
-            aggregatedDataMap[key].total += item.total;
+            // Fix floating point precision by rounding to 2 decimal places
+            aggregatedDataMap[key].qty = Math.round((aggregatedDataMap[key].qty + item.qty) * 100) / 100;
+            aggregatedDataMap[key].total = Math.round((aggregatedDataMap[key].total + item.total) * 100) / 100;
         }
     });
     const aggregatedData = Object.values(aggregatedDataMap);
 
-    const formatCurrency = (val) => new Intl.NumberFormat('vi-VN').format(val);
+    const formatCurrency = (val) => new Intl.NumberFormat('vi-VN').format(Math.round(val));
+    const formatQty = (val) => Number.isInteger(val) ? val : parseFloat(val.toFixed(2));
 
     const exportExcel = () => {
         const wb = XLSX.utils.book_new();
@@ -257,9 +276,9 @@ const Reports = () => {
             'STT': i + 1,
             'Tên sản phẩm': d.product,
             'ĐVT': d.unit,
-            'Tổng Số lượng': d.qty,
+            'Tổng Số lượng': formatQty(d.qty),
             'Đơn giá': d.price,
-            'Tổng Thành tiền': d.total
+            'Tổng Thành tiền': formatCurrency(d.total)
         }));
         const ws2 = XLSX.utils.json_to_sheet(ws2Data);
         XLSX.utils.book_append_sheet(wb, ws2, "Tổng hợp xuất hóa đơn");
@@ -268,7 +287,7 @@ const Reports = () => {
     };
 
     return (
-        <div className="tab-content">
+        <div className="tab-content glass-panel" style={{ padding: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
                 <h2>BÁO CÁO DOANH THU</h2>
                 <button className="btn btn-primary" onClick={exportExcel} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -276,7 +295,7 @@ const Reports = () => {
                 </button>
             </div>
 
-            <div style={{ display: 'flex', gap: '15px', marginBottom: '30px', background: '#fff', padding: '15px', borderRadius: '8px', border: '1px solid #eee', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '15px', marginBottom: '30px', background: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '12px', border: '1px solid var(--glass-border)', flexWrap: 'wrap' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                     <label>Thời Gian</label>
                     <select value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)}>
@@ -319,7 +338,7 @@ const Reports = () => {
             </div>
 
             <div style={{ marginBottom: '40px' }}>
-                <h3 style={{ marginBottom: '15px', color: 'var(--primary-orange)' }}>1. CHI TIẾT GIAO HÀNG</h3>
+                <h3 style={{ marginBottom: '15px', color: 'var(--primary-orange-light)', letterSpacing: '1px' }}>1. CHI TIẾT GIAO HÀNG</h3>
                 <table>
                     <thead>
                         <tr>
@@ -337,16 +356,16 @@ const Reports = () => {
                                 <td>{new Date(d.date).toLocaleDateString('vi-VN')}</td>
                                 <td style={{ textAlign: 'left' }}>{d.product}</td>
                                 <td>{d.unit}</td>
-                                <td>{d.qty}</td>
+                                <td>{formatQty(d.qty)}</td>
                                 <td style={{ textAlign: 'right' }}>{formatCurrency(d.price)}</td>
                                 <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(d.total)}</td>
                             </tr>
                         ))}
                     </tbody>
                     <tfoot>
-                        <tr style={{ background: '#fff5e6', fontWeight: 'bold' }}>
-                            <td colSpan="5">TỔNG CỘNG</td>
-                            <td style={{ textAlign: 'right', color: 'var(--primary-orange)', fontSize: '18px' }}>
+                        <tr style={{ background: 'rgba(255, 140, 0, 0.1)', fontWeight: 'bold' }}>
+                            <td colSpan="5" style={{ color: 'var(--text-muted)' }}>TỔNG CỘNG</td>
+                            <td style={{ textAlign: 'right', color: 'var(--primary-orange-light)', fontSize: '20px', fontWeight: '900' }}>
                                 {formatCurrency(detailedData.reduce((sum, d) => sum + d.total, 0))}
                             </td>
                         </tr>
@@ -355,7 +374,7 @@ const Reports = () => {
             </div>
 
             <div>
-                <h3 style={{ marginBottom: '15px', color: 'var(--primary-orange)' }}>2. TỔNG HỢP SẢN PHẨM (XUẤT HÓA ĐƠN)</h3>
+                <h3 style={{ marginBottom: '15px', color: 'var(--primary-orange-light)', letterSpacing: '1px' }}>2. TỔNG HỢP SẢN PHẨM (XUẤT HÓA ĐƠN)</h3>
                 <table>
                     <thead>
                         <tr>
@@ -373,16 +392,16 @@ const Reports = () => {
                                 <td>{i + 1}</td>
                                 <td style={{ textAlign: 'left' }}>{d.product}</td>
                                 <td>{d.unit}</td>
-                                <td>{d.qty}</td>
+                                <td>{formatQty(d.qty)}</td>
                                 <td style={{ textAlign: 'right' }}>{formatCurrency(d.price)}</td>
                                 <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(d.total)}</td>
                             </tr>
                         ))}
                     </tbody>
                     <tfoot>
-                        <tr style={{ background: '#fff5e6', fontWeight: 'bold' }}>
-                            <td colSpan="5">TỔNG CỘNG</td>
-                            <td style={{ textAlign: 'right', color: 'var(--primary-orange)', fontSize: '18px' }}>
+                        <tr style={{ background: 'rgba(255, 140, 0, 0.1)', fontWeight: 'bold' }}>
+                            <td colSpan="5" style={{ color: 'var(--text-muted)' }}>TỔNG CỘNG</td>
+                            <td style={{ textAlign: 'right', color: 'var(--primary-orange-light)', fontSize: '20px', fontWeight: '900' }}>
                                 {formatCurrency(aggregatedData.reduce((sum, d) => sum + d.total, 0))}
                             </td>
                         </tr>
@@ -390,19 +409,19 @@ const Reports = () => {
                 </table>
             </div>
             {/* Data Backup Section */}
-            <div style={{
-                marginTop: '40px',
-                padding: '30px',
-                background: '#F8F9FA',
-                borderRadius: '15px',
-                border: '1px solid #E9ECEF',
+            <div className="glass-panel" style={{
+                marginTop: '50px',
+                padding: '40px',
+                background: 'rgba(0, 0, 0, 0.2)',
+                borderRadius: '20px',
+                border: '1px solid var(--glass-border)',
                 textAlign: 'center'
             }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '50px', height: '50px', background: '#E3F2FD', borderRadius: '12px', marginBottom: '15px' }}>
-                    <Database color="#1976D2" size={24} />
+                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '60px', height: '60px', background: 'rgba(25, 118, 210, 0.2)', borderRadius: '15px', marginBottom: '20px', border: '1px solid rgba(25, 118, 210, 0.3)' }}>
+                    <Database color="#64b5f6" size={28} />
                 </div>
-                <h3 style={{ margin: '0 0 10px 0', color: '#333' }}>Hệ Thống Sao Lưu Dự Phòng</h3>
-                <p style={{ color: '#666', fontSize: '14px', maxWidth: '500px', margin: '0 auto 20px' }}>
+                <h3 style={{ margin: '0 0 12px 0', color: 'white', letterSpacing: '1px' }}>HỆ THỐNG SAO LƯU DỰ PHÒNG</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '15px', maxWidth: '600px', margin: '0 auto 25px', lineHeight: '1.6' }}>
                     Tải về toàn bộ dữ liệu (Khách hàng, Sản phẩm, Bảng giá, Đơn hàng) dưới dạng file Excel để lưu trữ an toàn trên máy tính cá nhân hoặc Google Drive.
                 </p>
                 <button
@@ -411,12 +430,16 @@ const Reports = () => {
                     className="btn btn-primary"
                     style={{
                         background: '#1976D2',
-                        borderColor: '#1976D2',
-                        padding: '12px 25px',
+                        borderColor: '#1e88e5',
+                        padding: '14px 30px',
+                        fontSize: '15px',
+                        fontWeight: 'bold',
+                        letterSpacing: '1px',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '10px',
-                        margin: '0 auto'
+                        gap: '12px',
+                        margin: '0 auto',
+                        boxShadow: '0 8px 20px rgba(25, 118, 210, 0.3)'
                     }}
                 >
                     <Download size={18} /> {backupLoading ? 'Đang xử lý...' : 'SAO LƯU TOÀN BỘ DỮ LIỆU'}

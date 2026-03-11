@@ -15,6 +15,12 @@ const Orders = () => {
     const [editingOrder, setEditingOrder] = useState(null);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [timeFilter, setTimeFilter] = useState('all');
+    const [selectedCustomerIdFilter, setSelectedCustomerIdFilter] = useState('all');
+    const [customDates, setCustomDates] = useState({
+        start: getLocalDateString(),
+        end: getLocalDateString()
+    });
 
     const [formData, setFormData] = useState({
         customer_id: '',
@@ -22,6 +28,8 @@ const Orders = () => {
         order_code: '',
         status: 'Đang xử lý',
         delivery_phone: '',
+        extra_charge: 0,
+        extra_charge_notes: '',
         items: []
     });
 
@@ -38,12 +46,47 @@ const Orders = () => {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [timeFilter, selectedCustomerIdFilter, customDates]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data: oData, error: oError } = await supabase.from('orders').select('*, customers(name, code, address, delivery_location, receiver, phone), delivery_phone').order('created_at', { ascending: false });
+            const now = new Date();
+            let startDateStr = '';
+            let endDateStr = null;
+
+            if (timeFilter === 'day') {
+                startDateStr = getLocalDateString(now);
+                endDateStr = startDateStr;
+            } else if (timeFilter === '7days') {
+                const d = new Date();
+                d.setDate(now.getDate() - 7);
+                startDateStr = getLocalDateString(d);
+            } else if (timeFilter === 'month') {
+                const d = new Date();
+                d.setDate(1);
+                startDateStr = getLocalDateString(d);
+            } else if (timeFilter === 'custom') {
+                startDateStr = customDates.start;
+                endDateStr = customDates.end;
+            }
+
+            let query = supabase
+                .from('orders')
+                .select('*, customers(name, code, address, delivery_location, receiver, phone), delivery_phone')
+                .order('order_date', { ascending: false });
+
+            if (startDateStr) {
+                query = query.gte('order_date', startDateStr);
+            }
+            if (endDateStr) {
+                query = query.lte('order_date', endDateStr);
+            }
+            if (selectedCustomerIdFilter !== 'all') {
+                query = query.eq('customer_id', selectedCustomerIdFilter);
+            }
+
+            const { data: oData, error: oError } = await query;
             if (oError) throw oError;
 
             const { data: cData, error: cError } = await supabase.from('customers').select('*').order('name', { ascending: true });
@@ -122,7 +165,6 @@ const Orders = () => {
         newItems[index][field] = value;
 
         if (field === 'product_id' && value) {
-            // Get price for this customer/product
             const { data: priceData } = await supabase
                 .from('customer_product_prices')
                 .select('price')
@@ -139,11 +181,52 @@ const Orders = () => {
             if (qty === null || qty === undefined || qty === '') {
                 newItems[index].total_price = 0;
             } else {
-                newItems[index].total_price = Number(qty) * Number(newItems[index].unit_price);
+                // Round to avoid floating point tails
+                newItems[index].total_price = Math.round(Number(qty) * Number(newItems[index].unit_price));
             }
         }
 
         setFormData({ ...formData, items: newItems });
+    };
+
+    const handleKeyDown = (e, rowIndex, colIndex) => {
+        const inputs = document.querySelectorAll('.order-item-input');
+        const numCols = 3; // requested_qty, actual_qty, unit_price (STT and product are usually not arrows-navigable or select)
+
+        switch (e.key) {
+            case 'ArrowRight':
+                if (colIndex < numCols - 1) {
+                    inputs[rowIndex * numCols + colIndex + 1]?.focus();
+                    e.preventDefault();
+                }
+                break;
+            case 'ArrowLeft':
+                if (colIndex > 0) {
+                    inputs[rowIndex * numCols + colIndex - 1]?.focus();
+                    e.preventDefault();
+                }
+                break;
+            case 'ArrowDown':
+                inputs[(rowIndex + 1) * numCols + colIndex]?.focus();
+                e.preventDefault();
+                break;
+            case 'ArrowUp':
+                if (rowIndex > 0) {
+                    inputs[(rowIndex - 1) * numCols + colIndex]?.focus();
+                    e.preventDefault();
+                }
+                break;
+            case 'Enter':
+                if (rowIndex === formData.items.length - 1 && colIndex === numCols - 1) {
+                    addItem();
+                } else {
+                    inputs[rowIndex * numCols + colIndex + 1]?.focus();
+                }
+                e.preventDefault();
+                break;
+            default:
+                break;
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -156,57 +239,54 @@ const Orders = () => {
         const totalAmount = formData.items.reduce((sum, item) => sum + (item.total_price || 0), 0);
         let orderId = editingOrder?.id;
 
-        if (editingOrder) {
-            const { error } = await supabase.from('orders').update({
-                customer_id: formData.customer_id,
-                order_date: formData.order_date,
-                order_code: formData.order_code,
-                status: formData.status,
-                delivery_phone: formData.delivery_phone,
-                total_amount: totalAmount
-            }).eq('id', orderId);
+        try {
+            if (editingOrder) {
+                const { error } = await supabase.from('orders').update({
+                    customer_id: formData.customer_id,
+                    order_date: formData.order_date,
+                    order_code: formData.order_code,
+                    status: formData.status,
+                    delivery_phone: formData.delivery_phone,
+                    total_amount: totalAmount,
+                    extra_charge: Number(formData.extra_charge) || 0,
+                    extra_charge_notes: formData.extra_charge_notes
+                }).eq('id', orderId);
 
-            if (error) {
-                console.error('Error updating order:', error);
-                alert(`Lỗi khi cập nhật đơn hàng: ${error.message}`);
-                return;
+                if (error) throw error;
+                await supabase.from('order_items').delete().eq('order_id', orderId);
+            } else {
+                const { data, error } = await supabase.from('orders').insert([{
+                    customer_id: formData.customer_id,
+                    order_date: formData.order_date,
+                    order_code: formData.order_code,
+                    status: formData.status,
+                    delivery_phone: formData.delivery_phone,
+                    total_amount: totalAmount,
+                    extra_charge: Number(formData.extra_charge) || 0,
+                    extra_charge_notes: formData.extra_charge_notes
+                }]).select();
+
+                if (error) throw error;
+                orderId = data[0].id;
             }
 
-            await supabase.from('order_items').delete().eq('order_id', orderId);
-        } else {
-            const { data, error } = await supabase.from('orders').insert([{
-                customer_id: formData.customer_id,
-                order_date: formData.order_date,
-                order_code: formData.order_code,
-                status: formData.status,
-                delivery_phone: formData.delivery_phone,
-                total_amount: totalAmount
-            }]).select();
+            const itemsToInsert = formData.items.map(item => ({
+                order_id: orderId,
+                product_id: item.product_id,
+                quantity_requested: item.quantity_requested,
+                quantity_actual: item.quantity_actual,
+                unit_price: item.unit_price,
+                total_price: item.total_price
+            }));
 
-            if (error) {
-                console.error('Error creating order:', error);
-                alert(`Lỗi khi tạo đơn hàng: ${error.message}`);
-                return;
-            }
-            orderId = data[0].id;
-        }
+            const { error: itemError } = await supabase.from('order_items').insert(itemsToInsert);
+            if (itemError) throw itemError;
 
-        const itemsToInsert = formData.items.map(item => ({
-            order_id: orderId,
-            product_id: item.product_id,
-            quantity_requested: item.quantity_requested,
-            quantity_actual: item.quantity_actual,
-            unit_price: item.unit_price,
-            total_price: item.total_price
-        }));
-
-        const { error: itemError } = await supabase.from('order_items').insert(itemsToInsert);
-        if (itemError) {
-            console.error('Error saving order items:', itemError);
-            alert(`Lỗi khi lưu chi tiết đơn hàng: ${itemError.message}`);
-        } else {
             setShowModal(false);
             fetchData();
+        } catch (error) {
+            console.error('Error saving order:', error);
+            alert(`Lỗi khi lưu đơn hàng: ${error.message}`);
         }
     };
 
@@ -218,6 +298,9 @@ const Orders = () => {
             order_date: order.order_date,
             order_code: order.order_code,
             status: order.status,
+            delivery_phone: order.delivery_phone || '',
+            extra_charge: order.extra_charge || 0,
+            extra_charge_notes: order.extra_charge_notes || '',
             items: items || []
         });
         setShowModal(true);
@@ -239,7 +322,7 @@ const Orders = () => {
         }
     };
 
-    const formatCurrency = (value) => new Intl.NumberFormat('vi-VN').format(value);
+    const formatCurrency = (value) => new Intl.NumberFormat('vi-VN').format(Math.round(value));
 
     const handleDelete = async (id) => {
         if (window.confirm('Xóa đơn hàng này?')) {
@@ -249,12 +332,53 @@ const Orders = () => {
     };
 
     return (
-        <div className="tab-content">
+        <div className="tab-content glass-panel" style={{ padding: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
                 <h2>QUẢN LÝ ĐƠN HÀNG</h2>
-                <button className="btn btn-primary" onClick={() => { setEditingOrder(null); setFormData({ customer_id: '', order_date: getLocalDateString(), order_code: '', status: 'Đang xử lý', delivery_phone: '', items: [] }); setShowModal(true); }}>
+                <button className="btn btn-primary" onClick={() => { setEditingOrder(null); setFormData({ customer_id: '', order_date: getLocalDateString(), order_code: '', status: 'Đang xử lý', delivery_phone: '', extra_charge: 0, extra_charge_notes: '', items: [] }); setShowModal(true); }}>
                     <Plus size={20} /> Tạo Đơn Mới
                 </button>
+            </div>
+            <div style={{ display: 'flex', gap: '15px', marginBottom: '25px', padding: '15px', borderRadius: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label>Thời Gian</label>
+                    <select value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)} style={{ minWidth: '150px' }}>
+                        <option value="all">Tất cả thời gian</option>
+                        <option value="day">Hôm nay</option>
+                        <option value="7days">7 Ngày qua</option>
+                        <option value="month">Tháng này</option>
+                        <option value="custom">Tùy chỉnh</option>
+                    </select>
+                </div>
+
+                {timeFilter === 'custom' && (
+                    <>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label>Từ ngày</label>
+                            <input
+                                type="date"
+                                value={customDates.start}
+                                onChange={(e) => setCustomDates({ ...customDates, start: e.target.value })}
+                            />
+                        </div>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label>Đến ngày</label>
+                            <input
+                                type="date"
+                                value={customDates.end}
+                                onChange={(e) => setCustomDates({ ...customDates, end: e.target.value })}
+                            />
+                        </div>
+                    </>
+                )}
+
+                <div className="form-group" style={{ marginBottom: 0, flex: 1, minWidth: '200px' }}>
+                    <label>Khách Hàng</label>
+                    <select value={selectedCustomerIdFilter} onChange={(e) => setSelectedCustomerIdFilter(e.target.value)}>
+                        <option value="all">Tất cả khách hàng</option>
+                        {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                </div>
             </div>
 
             <table>
@@ -276,9 +400,10 @@ const Orders = () => {
                             <td>{new Date(order.order_date).toLocaleDateString('vi-VN')}</td>
                             <td>
                                 <span style={{
-                                    padding: '4px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold',
-                                    backgroundColor: order.status === 'Đã thanh toán' ? '#d4edda' : order.status === 'Đang xử lý' ? '#fff3cd' : '#f8d7da',
-                                    color: order.status === 'Đã thanh toán' ? '#155724' : order.status === 'Đang xử lý' ? '#856404' : '#721c24'
+                                    padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold',
+                                    backgroundColor: order.status === 'Đã thanh toán' ? 'rgba(40, 167, 69, 0.2)' : order.status === 'Đang xử lý' ? 'rgba(255, 193, 7, 0.2)' : 'rgba(220, 53, 69, 0.2)',
+                                    color: order.status === 'Đã thanh toán' ? '#75ff91' : order.status === 'Đang xử lý' ? '#ffe082' : '#ff8a8a',
+                                    border: `1px solid ${order.status === 'Đã thanh toán' ? 'rgba(40, 167, 69, 0.3)' : order.status === 'Đang xử lý' ? 'rgba(255, 193, 7, 0.3)' : 'rgba(220, 53, 69, 0.3)'}`
                                 }}>
                                     {order.status}
                                 </span>
@@ -303,50 +428,52 @@ const Orders = () => {
                             <h3>{editingOrder ? 'CHỈNH SỬA ĐƠN HÀNG' : 'TẠO ĐƠN HÀNG MỚI'}</h3>
                             <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={24} /></button>
                         </div>
+
                         <form onSubmit={handleSubmit}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', marginBottom: '20px' }}>
-                                <div className="form-group">
-                                    <label>Khách Hàng *</label>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '5px' }}>Khách hàng</label>
                                     <select value={formData.customer_id} onChange={handleCustomerChange} required>
                                         <option value="">-- Chọn khách hàng --</option>
                                         {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                     </select>
                                 </div>
-                                <div className="form-group">
-                                    <label>Ngày Lập</label>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '5px' }}>Ngày giao hàng</label>
                                     <input type="date" value={formData.order_date} onChange={handleDateChange} required />
                                 </div>
-                                <div className="form-group">
-                                    <label>Mã Đơn (Tự động)</label>
-                                    <input value={formData.order_code} onChange={(e) => setFormData({ ...formData, order_code: e.target.value })} />
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '5px' }}>Mã đơn hàng</label>
+                                    <input type="text" value={formData.order_code} readOnly style={{ opacity: 0.7 }} />
                                 </div>
-                                <div className="form-group">
-                                    <label>Số ĐT Nhận Hàng</label>
-                                    <input value={formData.delivery_phone} onChange={(e) => setFormData({ ...formData, delivery_phone: e.target.value })} placeholder="Mặc định từ khách hàng" />
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '5px' }}>SĐT Giao hàng</label>
+                                    <input type="text" value={formData.delivery_phone} onChange={(e) => setFormData({ ...formData, delivery_phone: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '5px' }}>Trạng thái</label>
+                                    <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })}>
+                                        <option value="Đang xử lý">Đang xử lý</option>
+                                        <option value="Đã giao">Đã giao</option>
+                                        <option value="Đã thanh toán">Đã thanh toán</option>
+                                        <option value="Đã hủy">Đã hủy</option>
+                                    </select>
                                 </div>
                             </div>
 
-                            <div className="form-group">
-                                <label>Trạng Thái</label>
-                                <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })}>
-                                    <option value="Đang xử lý">Đang xử lý (Chưa tính công nợ)</option>
-                                    <option value="Đã giao">Đã giao (Tính công nợ)</option>
-                                    <option value="Đã thanh toán">Đã thanh toán (Trừ công nợ)</option>
-                                    <option value="Đã hủy">Đã hủy</option>
-                                </select>
-                            </div>
-
-                            <div style={{ border: '1px solid #eee', padding: '15px', borderRadius: '8px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                                    <h4 style={{ color: 'var(--primary-orange)' }}>Danh Sách Sản Phẩm</h4>
-                                    <button type="button" className="btn btn-primary" onClick={addItem}><Plus size={16} /> Thêm SP</button>
+                            <div style={{ marginBottom: '20px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', alignItems: 'center' }}>
+                                    <h4 style={{ margin: 0 }}>CHI TIẾT MẶT HÀNG</h4>
+                                    <button type="button" className="btn btn-primary" onClick={addItem} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                        <Plus size={16} /> Thêm SP
+                                    </button>
                                 </div>
-                                <table>
+                                <table style={{ boxShadow: 'none' }}>
                                     <thead>
                                         <tr>
-                                            <th style={{ width: '30%' }}>Sản Phẩm</th>
-                                            <th>SL Yêu Cầu</th>
-                                            <th>SL Thực Tế</th>
+                                            <th style={{ textAlign: 'left' }}>Sản Phẩm</th>
+                                            <th>SL Yêu cầu</th>
+                                            <th>SL Thực tế</th>
                                             <th>Đơn Giá</th>
                                             <th>Thành Tiền</th>
                                             <th></th>
@@ -356,14 +483,41 @@ const Orders = () => {
                                         {formData.items.map((item, idx) => (
                                             <tr key={idx}>
                                                 <td>
-                                                    <select value={item.product_id} onChange={(e) => handleItemChange(idx, 'product_id', e.target.value)} required>
+                                                    <select value={item.product_id} onChange={(e) => handleItemChange(idx, 'product_id', e.target.value)} required style={{ width: '100%', border: 'none', background: 'transparent' }}>
                                                         <option value="">-- Chọn SP --</option>
                                                         {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.unit})</option>)}
                                                     </select>
                                                 </td>
-                                                <td><input type="number" step="0.01" value={item.quantity_requested || ''} onChange={(e) => handleItemChange(idx, 'quantity_requested', e.target.value === '' ? null : e.target.value)} placeholder="Trống" /></td>
-                                                <td><input type="number" step="0.01" value={item.quantity_actual || ''} onChange={(e) => handleItemChange(idx, 'quantity_actual', e.target.value === '' ? null : e.target.value)} placeholder="Trống" /></td>
-                                                <td><input type="number" value={item.unit_price} onChange={(e) => handleItemChange(idx, 'unit_price', e.target.value)} /></td>
+                                                <td>
+                                                    <input
+                                                        type="number"
+                                                        className="order-item-input"
+                                                        value={item.quantity_requested || ''}
+                                                        onChange={(e) => handleItemChange(idx, 'quantity_requested', e.target.value)}
+                                                        onKeyDown={(e) => handleKeyDown(e, idx, 0)}
+                                                        style={{ width: '100%', textAlign: 'center', border: 'none', background: 'transparent' }}
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        type="number"
+                                                        className="order-item-input"
+                                                        value={item.quantity_actual || ''}
+                                                        onChange={(e) => handleItemChange(idx, 'quantity_actual', e.target.value)}
+                                                        onKeyDown={(e) => handleKeyDown(e, idx, 1)}
+                                                        style={{ width: '100%', textAlign: 'center', border: 'none', background: 'transparent' }}
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        type="number"
+                                                        className="order-item-input"
+                                                        value={item.unit_price}
+                                                        onChange={(e) => handleItemChange(idx, 'unit_price', e.target.value)}
+                                                        onKeyDown={(e) => handleKeyDown(e, idx, 2)}
+                                                        style={{ width: '100%', textAlign: 'center', border: 'none', background: 'transparent' }}
+                                                    />
+                                                </td>
                                                 <td style={{ fontWeight: 'bold' }}>{item.quantity_actual ? formatCurrency(item.total_price) : ''}</td>
                                                 <td><button type="button" onClick={() => removeItem(idx)} style={{ color: '#dc3545', border: 'none', background: 'none' }}><Trash2 size={16} /></button></td>
                                             </tr>
@@ -372,8 +526,35 @@ const Orders = () => {
                                 </table>
                             </div>
 
-                            <div style={{ textAlign: 'right', marginTop: '20px', fontSize: '20px', fontWeight: 'bold', color: 'var(--primary-orange)' }}>
-                                Tổng cộng: {formatCurrency(formData.items.reduce((sum, i) => sum + i.total_price, 0))}
+                            <div style={{ marginTop: '20px', borderTop: '1px solid var(--glass-border)', paddingTop: '15px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '15px' }}>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Phí bổ sung (Ship/Phí khác)</label>
+                                        <input
+                                            type="number"
+                                            value={formData.extra_charge}
+                                            onChange={(e) => setFormData({ ...formData, extra_charge: e.target.value })}
+                                            style={{ width: '100%' }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Ghi chú phí</label>
+                                        <input
+                                            type="text"
+                                            value={formData.extra_charge_notes}
+                                            onChange={(e) => setFormData({ ...formData, extra_charge_notes: e.target.value })}
+                                            style={{ width: '100%' }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
+                                    <div style={{ fontSize: '16px' }}>Tiền hàng: <span style={{ fontWeight: 'bold' }}>{formatCurrency(formData.items.reduce((sum, item) => sum + (item.total_price || 0), 0))}</span></div>
+                                    <div style={{ fontSize: '16px' }}>Phí bổ sung: <span style={{ fontWeight: 'bold' }}>{formatCurrency(Number(formData.extra_charge) || 0)}</span></div>
+                                    <div style={{ fontSize: '20px', color: 'var(--primary-orange)', marginTop: '8px', borderTop: '1px solid var(--glass-border)', paddingTop: '10px' }}>
+                                        Tổng cộng đơn hàng: <span style={{ fontWeight: '900', color: 'white' }}>{formatCurrency(formData.items.reduce((sum, item) => sum + (item.total_price || 0), 0) + (Number(formData.extra_charge) || 0))}</span>
+                                    </div>
+                                </div>
                             </div>
 
                             <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
@@ -429,7 +610,7 @@ const Orders = () => {
 
                             <p style={{ textAlign: 'left', marginBottom: '10px' }}>Chúng tôi xin giao các sản phẩm như sau:</p>
 
-                            <table style={{ textAlign: 'center', borderCollapse: 'collapse', width: '100%', marginBottom: '30px', fontSize: '13px' }}>
+                            <table style={{ textAlign: 'center', borderCollapse: 'collapse', width: '100%', marginBottom: '10px', fontSize: '13px' }}>
                                 <thead style={{ background: '#fff' }}>
                                     <tr>
                                         <th style={{ border: '1px solid black', padding: '10px', fontWeight: 'bold' }}>STT</th>
@@ -453,12 +634,33 @@ const Orders = () => {
                                             <td style={{ textAlign: 'center', border: '1px solid black', padding: '10px' }}>{item.quantity_actual ? formatCurrency(item.total_price) : ''}</td>
                                         </tr>
                                     ))}
+                                    {/* Subtotal Label */}
                                     {selectedOrder.items?.some(i => i.quantity_actual) && (
                                         <tr>
-                                            <td colSpan="5"></td>
-                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold' }}>Tổng cộng</td>
+                                            <td colSpan="5" style={{ border: 'none' }}></td>
+                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold' }}>Tiền hàng</td>
                                             <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold', textAlign: 'right' }}>
                                                 {formatCurrency(selectedOrder.items.reduce((sum, i) => sum + (i.quantity_actual ? i.total_price : 0), 0))}
+                                            </td>
+                                        </tr>
+                                    )}
+                                    {/* Extra Charge Label (Conditional) */}
+                                    {Number(selectedOrder.extra_charge) > 0 && (
+                                        <tr>
+                                            <td colSpan="5" style={{ border: 'none' }}></td>
+                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold' }}>{selectedOrder.extra_charge_notes || 'Phí bổ sung'}</td>
+                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold', textAlign: 'right' }}>
+                                                {formatCurrency(selectedOrder.extra_charge)}
+                                            </td>
+                                        </tr>
+                                    )}
+                                    {/* Total Label */}
+                                    {selectedOrder.items?.some(i => i.quantity_actual) && (
+                                        <tr>
+                                            <td colSpan="5" style={{ border: 'none' }}></td>
+                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold', backgroundColor: '#f9f9f9' }}>Tổng cộng</td>
+                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold', textAlign: 'right', backgroundColor: '#f9f9f9' }}>
+                                                {formatCurrency(selectedOrder.items.reduce((sum, i) => sum + (i.quantity_actual ? i.total_price : 0), 0) + (Number(selectedOrder.extra_charge) || 0))}
                                             </td>
                                         </tr>
                                     )}

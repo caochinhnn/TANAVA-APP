@@ -30,85 +30,65 @@ const Login = () => {
             justifyContent: 'center',
             alignItems: 'center',
             minHeight: '100vh',
-            background: 'linear-gradient(135deg, #FFF5E6 0%, #FFFFFF 100%)'
+            padding: '20px'
         }}>
-            <div style={{
+            <div className="glass-panel" style={{
                 width: '100%',
-                maxWidth: '400px',
-                background: 'white',
-                padding: '40px',
-                borderRadius: '20px',
-                boxShadow: '0 20px 40px rgba(255, 140, 0, 0.1)',
-                border: '1px solid #FFE0B3'
+                maxWidth: '430px',
+                padding: '50px 40px',
+                textAlign: 'center'
             }}>
-                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                <div style={{ marginBottom: '40px' }}>
                     <div style={{
-                        width: '70px',
-                        height: '70px',
-                        background: 'var(--primary-orange)',
-                        borderRadius: '15px',
+                        width: '80px',
+                        height: '80px',
+                        background: 'linear-gradient(135deg, var(--primary-orange) 0%, #FFB347 100%)',
+                        borderRadius: '20px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        margin: '0 auto 20px',
-                        boxShadow: '0 8px 16px rgba(255, 140, 0, 0.3)'
+                        margin: '0 auto 25px',
+                        boxShadow: '0 10px 25px rgba(255, 140, 0, 0.4)'
                     }}>
-                        <LogIn color="white" size={32} />
+                        <LogIn color="white" size={36} />
                     </div>
-                    <h2 style={{ color: 'var(--text-black)', fontSize: '28px', fontWeight: '800', margin: '0 0 10px 0' }}>TANAVA ADMIN</h2>
-                    <p style={{ color: '#666', fontSize: '14px' }}>Vui lòng đăng nhập để quản lý hệ thống</p>
+                    <h2 style={{ color: 'white', fontSize: '32px', fontWeight: '900', margin: '0 0 10px 0', letterSpacing: '2px' }}>TANAVA</h2>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '15px', fontWeight: '500' }}>Hệ thống quản lý thực phẩm</p>
                 </div>
 
                 {error && (
                     <div style={{
-                        background: '#FFF0F0',
-                        color: '#D8000C',
-                        padding: '12px',
-                        borderRadius: '8px',
-                        marginBottom: '20px',
+                        background: 'rgba(220, 53, 69, 0.2)',
+                        color: '#ff8a8a',
+                        padding: '14px',
+                        borderRadius: '12px',
+                        marginBottom: '25px',
                         fontSize: '14px',
-                        textAlign: 'center',
-                        border: '1px solid #FFD2D2'
+                        border: '1px solid rgba(220, 53, 69, 0.2)'
                     }}>
                         {error}
                     </div>
                 )}
 
-                <form onSubmit={handleLogin}>
-                    <div className="form-group" style={{ marginBottom: '20px' }}>
-                        <label style={{ fontSize: '13px', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>Email</label>
+                <form onSubmit={handleLogin} style={{ textAlign: 'left' }}>
+                    <div className="form-group">
+                        <label>Email Đăng Nhập</label>
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="username@email.com"
+                            placeholder="name@company.com"
                             required
-                            style={{
-                                marginTop: '8px',
-                                padding: '12px 15px',
-                                border: '2px solid #F0F0F0',
-                                borderRadius: '10px',
-                                transition: 'all 0.3s ease',
-                                fontSize: '15px'
-                            }}
                         />
                     </div>
-                    <div className="form-group" style={{ marginBottom: '30px' }}>
-                        <label style={{ fontSize: '13px', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>Mật khẩu</label>
+                    <div className="form-group" style={{ marginBottom: '35px' }}>
+                        <label>Mật Khẩu</label>
                         <input
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="••••••••"
                             required
-                            style={{
-                                marginTop: '8px',
-                                padding: '12px 15px',
-                                border: '2px solid #F0F0F0',
-                                borderRadius: '10px',
-                                transition: 'all 0.3s ease',
-                                fontSize: '15px'
-                            }}
                         />
                     </div>
                     <button
@@ -117,20 +97,18 @@ const Login = () => {
                         className="btn btn-primary"
                         style={{
                             width: '100%',
-                            padding: '14px',
+                            padding: '16px',
                             fontSize: '16px',
-                            borderRadius: '10px',
-                            background: loading ? '#CCC' : 'var(--primary-orange)',
-                            boxShadow: '0 4px 12px rgba(255, 140, 0, 0.2)',
-                            transition: 'transform 0.2s active'
+                            borderRadius: '14px',
+                            letterSpacing: '1px'
                         }}
                     >
-                        {loading ? 'Đang xử lý...' : 'ĐĂNG NHẬP'}
+                        {loading ? 'ĐANG XỬ LÝ...' : 'ĐĂNG NHẬP HỆ THỐNG'}
                     </button>
                 </form>
 
-                <div style={{ marginTop: '30px', textAlign: 'center', fontSize: '12px', color: '#AAA' }}>
-                    © 2026 Admin Panel. Designed with excellence.
+                <div style={{ marginTop: '40px', fontSize: '13px', color: 'var(--text-muted)', opacity: 0.6 }}>
+                    © 2026 Tan Nam Vang Food. All rights reserved.
                 </div>
             </div>
         </div>

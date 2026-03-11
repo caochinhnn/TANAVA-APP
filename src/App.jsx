@@ -53,53 +53,45 @@ function App() {
 
   return (
     <div className="container">
-      <header style={{ position: 'relative', marginBottom: '30px', textAlign: 'center', background: 'white', padding: '20px', borderRadius: '0 0 15px 15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-        <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <span style={{ fontSize: '12px', color: '#666' }}>{session.user.email}</span>
+      <header className="glass-panel" style={{ position: 'relative', marginBottom: '40px', textAlign: 'center', padding: '30px', borderRadius: '0 0 32px 32px' }}>
+        <div style={{ position: 'absolute', top: '30px', right: '30px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '500' }}>{session.user.email}</span>
           <button
             onClick={handleLogout}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              background: '#f5f5f5',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              color: '#444'
-            }}
+            className="btn btn-secondary"
+            style={{ padding: '8px 16px', fontSize: '12px' }}
           >
-            <LogOut size={16} /> Thoát
+            <LogOut size={14} /> Thoát
           </button>
         </div>
-        <h1 style={{ color: 'var(--primary-orange)', fontSize: '36px', letterSpacing: '3px', margin: 0 }}>TANAVA APP</h1>
-        <p style={{ color: '#000', fontWeight: 'bold', fontSize: '14px', marginTop: '5px' }}>HỆ THỐNG QUẢN LÝ THỰC PHẨM TƯƠI SỐNG</p>
+        <h1 className="glow-text" style={{ color: 'var(--primary-orange)', fontSize: '42px', fontWeight: '900', letterSpacing: '6px', margin: 0 }}>TANAVA APP</h1>
+        <p style={{ color: 'white', fontWeight: '600', fontSize: '15px', marginTop: '8px', opacity: 0.8, letterSpacing: '2px' }}>HỆ THỐNG QUẢN LÝ THỰC PHẨM TƯƠI SỐNG</p>
       </header>
 
-      <div className="tabs-header" style={{ borderRadius: '8px', overflow: 'hidden' }}>
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
-            style={{ flex: 1, textAlign: 'center' }}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div className="tabs-header">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <main style={{ minHeight: '600px', background: 'white', padding: '30px', borderRadius: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
+      <main>
         {renderTabContent()}
       </main>
 
-      <footer style={{ marginTop: '50px', padding: '30px', background: '#333', color: '#fff', borderRadius: '15px 15px 0 0', textAlign: 'center' }}>
-        <h4 style={{ color: 'var(--primary-orange)' }}>Công ty TNHH TM DV Thực Phẩm Tân Nam Vang</h4>
-        <p style={{ fontSize: '14px', marginTop: '10px', opacity: 0.8 }}>Địa chỉ: Lô 16/18 Hưng Phú, Phường Chánh Hưng, Tp HCM</p>
-        <p style={{ fontSize: '14px', opacity: 0.8 }}>MST: 0317426213 | SĐT: 0965551315</p>
-        <p style={{ marginTop: '20px', fontSize: '12px', opacity: 0.5 }}>&copy; 2026 Admin Panel. Designed with excellence.</p>
+      <footer className="glass-panel" style={{ marginTop: '60px', padding: '50px', textAlign: 'center', borderRadius: '32px 32px 0 0' }}>
+        <h4 style={{ color: 'var(--primary-orange)', fontSize: '20px', fontWeight: '800', marginBottom: '15px', letterSpacing: '1px' }}>Công ty TNHH TM DV Thực Phẩm Tân Nam Vang</h4>
+        <p style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '5px' }}>Địa chỉ: Lô 16/18 Hưng Phú, Phường Chánh Hưng, Tp HCM</p>
+        <p style={{ fontSize: '15px', color: 'var(--text-muted)' }}>MST: 0317426213 | SĐT: 0965551315</p>
+        <div style={{ marginTop: '40px', height: '1px', background: 'var(--glass-border)', width: '50%', margin: '40px auto' }}></div>
+        <p style={{ fontSize: '12px', opacity: 0.4, letterSpacing: '1px' }}>&copy; 2026 Admin Panel. Crafted with Excellence.</p>
       </footer>
     </div>
   );

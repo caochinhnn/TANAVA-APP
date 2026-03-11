@@ -111,7 +111,7 @@ const Products = () => {
     const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (
-        <div className="tab-content">
+        <div className="tab-content glass-panel" style={{ padding: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
                 <h2>QUẢN LÝ SẢN PHẨM</h2>
                 <button className="btn btn-primary" onClick={() => { setEditingProduct(null); setFormData({ name: '', unit: '', default_price: 0 }); setShowModal(true); }} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -119,15 +119,15 @@ const Products = () => {
                 </button>
             </div>
 
-            <div style={{ position: 'relative', marginBottom: '20px' }}>
+            <div style={{ position: 'relative', marginBottom: '25px' }}>
                 <input
                     type="text"
                     placeholder="Tìm sản phẩm..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ paddingLeft: '35px', width: '100%', height: '40px', border: '1px solid #ddd', borderRadius: '4px' }}
+                    style={{ paddingLeft: '45px' }}
                 />
-                <Search size={20} style={{ position: 'absolute', left: '10px', top: '10px', color: '#888' }} />
+                <Search size={20} style={{ position: 'absolute', left: '15px', top: '12px', color: 'var(--text-muted)' }} />
             </div>
 
             <table>
