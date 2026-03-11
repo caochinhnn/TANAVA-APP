@@ -268,7 +268,7 @@ input[type=number] {
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(12px);
   display: flex;
-  align-items: flex-start; /* Move to top */
+  align-items: center; /* Center vertically */
   justify-content: center;
   z-index: 9999;
   padding-top: 0; /* No padding at top */
@@ -287,8 +287,8 @@ input[type=number] {
   width: 90%;
   max-width: 600px;
   position: relative;
-  margin-top: -10px; /* Push slightly into the top edge */
-  margin-bottom: auto;
+  margin-top: 20px; /* Space from top if content is long */
+  margin-bottom: 20px; /* Space from bottom */
 }
 
 /* Animations - Page Transitions */
