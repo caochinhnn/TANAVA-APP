@@ -34,3 +34,28 @@ export const formatDateVN = (dateInput) => {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
 };
+
+/**
+ * Converts a YYYY-MM-DD string or Date object to DD-MM-YYYY format for Excel exports
+ */
+export const formatDateExport = (dateInput) => {
+    if (!dateInput || dateInput === 'N/A') return dateInput;
+    
+    let date;
+    if (typeof dateInput === 'string') {
+        const parts = dateInput.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+        date = new Date(dateInput);
+    } else {
+        date = dateInput;
+    }
+
+    if (isNaN(date.getTime())) return dateInput;
+
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+};

@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 import { Search, Download, FileSpreadsheet, Database } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-import { getLocalDateString, formatDateVN } from '../utils/dateUtils';
+import { getLocalDateString, formatDateVN, formatDateExport } from '../utils/dateUtils';
 
 const Reports = () => {
     const [orders, setOrders] = useState([]);
@@ -261,7 +261,7 @@ const Reports = () => {
         // Detailed Sheet
         const ws1Data = detailedData.map((d, i) => ({
             'STT': i + 1,
-            'Ngày giao': d.date,
+            'Ngày giao': formatDateExport(d.date),
             'Tên sản phẩm': d.product,
             'ĐVT': d.unit,
             'Số lượng': d.qty,
