@@ -62,7 +62,12 @@ const Dashboard = () => {
                 const d = new Date(o.order_date).toLocaleDateString('vi-VN');
                 dateMap[d] = (dateMap[d] || 0) + (o.status !== 'Đã hủy' ? Number(o.total_amount) : 0);
             });
-            const barData = Object.entries(dateMap).map(([name, value]) => ({ name, value }));
+            const barData = Object.entries(dateMap)
+                .map(([name, value]) => {
+                    const [day, month, year] = name.split('/');
+                    return { name, value, date: new Date(year, month - 1, day) };
+                })
+                .sort((a, b) => a.date - b.date);
 
             // Process Pie Chart (Revenue by Customer - top 5)
             const custMap = {};

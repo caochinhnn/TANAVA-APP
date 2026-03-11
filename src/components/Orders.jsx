@@ -176,13 +176,14 @@ const Orders = () => {
             newItems[index].unit_price = priceData?.price || product?.default_price || 0;
         }
 
-        if (field === 'quantity_actual' || field === 'unit_price') {
+        if (field === 'quantity_actual' || field === 'unit_price' || field === 'product_id') {
             const qty = newItems[index].quantity_actual;
-            if (qty === null || qty === undefined || qty === '') {
+            const price = newItems[index].unit_price;
+            if (qty === null || qty === undefined || qty === '' || !price) {
                 newItems[index].total_price = 0;
             } else {
                 // Round to avoid floating point tails
-                newItems[index].total_price = Math.round(Number(qty) * Number(newItems[index].unit_price));
+                newItems[index].total_price = Math.round(Number(qty) * Number(price));
             }
         }
 
@@ -322,7 +323,21 @@ const Orders = () => {
         }
     };
 
-    const formatCurrency = (value) => new Intl.NumberFormat('vi-VN').format(Math.round(value));
+    const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('vi-VN').format(amount);
+};
+
+// Helper for input formatting
+const formatInputCurrency = (value) => {
+    if (!value) return '';
+    const numericValue = value.replace(/\D/g, '');
+    return new Intl.NumberFormat('vi-VN').format(numericValue);
+};
+
+const parseInputCurrency = (value) => {
+    if (!value) return 0;
+    return parseInt(value.replace(/\D/g, '')) || 0;
+};
 
     const handleDelete = async (id) => {
         if (window.confirm('Xóa đơn hàng này?')) {
@@ -471,55 +486,55 @@ const Orders = () => {
                                 <table style={{ boxShadow: 'none' }}>
                                     <thead>
                                         <tr>
-                                            <th style={{ textAlign: 'left' }}>Sản Phẩm</th>
-                                            <th>SL Yêu cầu</th>
-                                            <th>SL Thực tế</th>
-                                            <th>Đơn Giá</th>
-                                            <th>Thành Tiền</th>
-                                            <th></th>
+                                             <th style={{ textAlign: 'left', width: '32%' }}>Sản Phẩm</th>
+                                             <th style={{ width: '15%' }}>SL Yêu cầu</th>
+                                             <th style={{ width: '15%' }}>SL Thực tế</th>
+                                             <th style={{ width: '18%' }}>Đơn Giá</th>
+                                             <th style={{ width: '20%' }}>Thành Tiền</th>
+                                            <th style={{ width: '50px' }}></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {formData.items.map((item, idx) => (
                                             <tr key={idx}>
-                                                <td>
+                                                <td style={{ width: '32%' }}>
                                                     <select value={item.product_id} onChange={(e) => handleItemChange(idx, 'product_id', e.target.value)} required style={{ width: '100%', border: 'none', background: 'transparent' }}>
                                                         <option value="">-- Chọn SP --</option>
                                                         {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.unit})</option>)}
                                                     </select>
                                                 </td>
-                                                <td>
+                                                <td style={{ width: '15%' }}>
                                                     <input
                                                         type="number"
-                                                        className="order-item-input"
+                                                        className="order-item-input highlight-input"
                                                         value={item.quantity_requested || ''}
                                                         onChange={(e) => handleItemChange(idx, 'quantity_requested', e.target.value)}
                                                         onKeyDown={(e) => handleKeyDown(e, idx, 0)}
-                                                        style={{ width: '100%', textAlign: 'center', border: 'none', background: 'transparent' }}
+                                                        style={{ width: '100%', textAlign: 'center', padding: '14px 10px' }}
                                                     />
                                                 </td>
-                                                <td>
+                                                <td style={{ width: '15%' }}>
                                                     <input
                                                         type="number"
-                                                        className="order-item-input"
+                                                        className="order-item-input highlight-input"
                                                         value={item.quantity_actual || ''}
                                                         onChange={(e) => handleItemChange(idx, 'quantity_actual', e.target.value)}
                                                         onKeyDown={(e) => handleKeyDown(e, idx, 1)}
-                                                        style={{ width: '100%', textAlign: 'center', border: 'none', background: 'transparent' }}
+                                                        style={{ width: '100%', textAlign: 'center', padding: '14px 10px' }}
                                                     />
                                                 </td>
-                                                <td>
+                                                <td style={{ width: '18%' }}>
                                                     <input
-                                                        type="number"
-                                                        className="order-item-input"
-                                                        value={item.unit_price}
-                                                        onChange={(e) => handleItemChange(idx, 'unit_price', e.target.value)}
+                                                        type="text"
+                                                        className="order-item-input highlight-input"
+                                                        value={formatInputCurrency(String(item.unit_price))}
+                                                        onChange={(e) => handleItemChange(idx, 'unit_price', parseInputCurrency(e.target.value))}
                                                         onKeyDown={(e) => handleKeyDown(e, idx, 2)}
-                                                        style={{ width: '100%', textAlign: 'center', border: 'none', background: 'transparent' }}
+                                                        style={{ width: '100%', textAlign: 'center' }}
                                                     />
                                                 </td>
-                                                <td style={{ fontWeight: 'bold' }}>{item.quantity_actual ? formatCurrency(item.total_price) : ''}</td>
-                                                <td><button type="button" onClick={() => removeItem(idx)} style={{ color: '#dc3545', border: 'none', background: 'none' }}><Trash2 size={16} /></button></td>
+                                                <td style={{ fontWeight: 'bold', width: '20%' }}>{item.quantity_actual ? formatCurrency(item.total_price) : ''}</td>
+                                                <td style={{ width: '50px' }}><button type="button" onClick={() => removeItem(idx)} style={{ color: '#dc3545', border: 'none', background: 'none' }}><Trash2 size={16} /></button></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -610,36 +625,36 @@ const Orders = () => {
 
                             <p style={{ textAlign: 'left', marginBottom: '10px' }}>Chúng tôi xin giao các sản phẩm như sau:</p>
 
-                            <table style={{ textAlign: 'center', borderCollapse: 'collapse', width: '100%', marginBottom: '10px', fontSize: '13px' }}>
+                            <table style={{ textAlign: 'center', borderCollapse: 'collapse', width: '100%', marginBottom: '10px', fontSize: '13px', color: 'black' }}>
                                 <thead style={{ background: '#fff' }}>
                                     <tr>
-                                        <th style={{ border: '1px solid black', padding: '10px', fontWeight: 'bold' }}>STT</th>
-                                        <th style={{ textAlign: 'center', border: '1px solid black', padding: '10px', fontWeight: 'bold' }}>TÊN HÀNG</th>
-                                        <th style={{ border: '1px solid black', padding: '10px', fontWeight: 'bold' }}>ĐVT</th>
-                                        <th style={{ border: '1px solid black', padding: '10px', fontWeight: 'bold' }}>SL Yêu cầu</th>
-                                        <th style={{ border: '1px solid black', padding: '10px', fontWeight: 'bold' }}>SL Thực tế</th>
-                                        <th style={{ border: '1px solid black', padding: '10px', fontWeight: 'bold' }}>ĐƠN GIÁ</th>
-                                        <th style={{ border: '1px solid black', padding: '10px', fontWeight: 'bold' }}>THÀNH TIỀN</th>
+                                        <th style={{ border: '1px solid black', padding: '10px', fontWeight: 'bold', color: 'black' }}>STT</th>
+                                        <th style={{ textAlign: 'center', border: '1px solid black', padding: '10px', fontWeight: 'bold', color: 'black' }}>TÊN HÀNG</th>
+                                        <th style={{ border: '1px solid black', padding: '10px', fontWeight: 'bold', color: 'black' }}>ĐVT</th>
+                                        <th style={{ border: '1px solid black', padding: '10px', fontWeight: 'bold', color: 'black', textAlign: 'center' }}>SL Yêu cầu</th>
+                                        <th style={{ border: '1px solid black', padding: '10px', fontWeight: 'bold', color: 'black', textAlign: 'center' }}>SL Thực tế</th>
+                                        <th style={{ border: '1px solid black', padding: '10px', fontWeight: 'bold', color: 'black' }}>ĐƠN GIÁ</th>
+                                        <th style={{ border: '1px solid black', padding: '10px', fontWeight: 'bold', color: 'black' }}>THÀNH TIỀN</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {selectedOrder.items?.map((item, idx) => (
                                         <tr key={idx}>
-                                            <td style={{ border: '1px solid black', padding: '10px' }}>{idx + 1}</td>
-                                            <td style={{ textAlign: 'left', border: '1px solid black', padding: '10px' }}>{item.products?.name}</td>
-                                            <td style={{ border: '1px solid black', padding: '10px' }}>{item.products?.unit}</td>
-                                            <td style={{ border: '1px solid black', padding: '10px' }}>{item.quantity_requested || ''}</td>
-                                            <td style={{ border: '1px solid black', padding: '10px' }}>{item.quantity_actual || ''}</td>
-                                            <td style={{ textAlign: 'center', border: '1px solid black', padding: '10px' }}>{formatCurrency(item.unit_price)}</td>
-                                            <td style={{ textAlign: 'center', border: '1px solid black', padding: '10px' }}>{item.quantity_actual ? formatCurrency(item.total_price) : ''}</td>
+                                            <td style={{ border: '1px solid black', padding: '10px', color: 'black' }}>{idx + 1}</td>
+                                            <td style={{ textAlign: 'left', border: '1px solid black', padding: '10px', color: 'black' }}>{item.products?.name}</td>
+                                            <td style={{ border: '1px solid black', padding: '10px', color: 'black' }}>{item.products?.unit}</td>
+                                            <td style={{ border: '1px solid black', padding: '10px', color: 'black', textAlign: 'center' }}>{item.quantity_requested || ''}</td>
+                                            <td style={{ border: '1px solid black', padding: '10px', color: 'black', textAlign: 'center' }}>{item.quantity_actual || ''}</td>
+                                            <td style={{ textAlign: 'center', border: '1px solid black', padding: '10px', color: 'black' }}>{formatCurrency(item.unit_price)}</td>
+                                            <td style={{ textAlign: 'center', border: '1px solid black', padding: '10px', color: 'black' }}>{item.quantity_actual ? formatCurrency(item.total_price) : ''}</td>
                                         </tr>
                                     ))}
                                     {/* Subtotal Label */}
                                     {selectedOrder.items?.some(i => i.quantity_actual) && (
                                         <tr>
                                             <td colSpan="5" style={{ border: 'none' }}></td>
-                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold' }}>Tiền hàng</td>
-                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold', textAlign: 'right' }}>
+                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold', color: 'black' }}>Tiền hàng</td>
+                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold', textAlign: 'right', color: 'black' }}>
                                                 {formatCurrency(selectedOrder.items.reduce((sum, i) => sum + (i.quantity_actual ? i.total_price : 0), 0))}
                                             </td>
                                         </tr>
@@ -648,8 +663,8 @@ const Orders = () => {
                                     {Number(selectedOrder.extra_charge) > 0 && (
                                         <tr>
                                             <td colSpan="5" style={{ border: 'none' }}></td>
-                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold' }}>{selectedOrder.extra_charge_notes || 'Phí bổ sung'}</td>
-                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold', textAlign: 'right' }}>
+                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold', color: 'black' }}>{selectedOrder.extra_charge_notes || 'Phí bổ sung'}</td>
+                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold', textAlign: 'right', color: 'black' }}>
                                                 {formatCurrency(selectedOrder.extra_charge)}
                                             </td>
                                         </tr>
@@ -658,8 +673,8 @@ const Orders = () => {
                                     {selectedOrder.items?.some(i => i.quantity_actual) && (
                                         <tr>
                                             <td colSpan="5" style={{ border: 'none' }}></td>
-                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold', backgroundColor: '#f9f9f9' }}>Tổng cộng</td>
-                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold', textAlign: 'right', backgroundColor: '#f9f9f9' }}>
+                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold', backgroundColor: '#f9f9f9', color: 'black' }}>Tổng cộng</td>
+                                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold', textAlign: 'right', backgroundColor: '#f9f9f9', color: 'black' }}>
                                                 {formatCurrency(selectedOrder.items.reduce((sum, i) => sum + (i.quantity_actual ? i.total_price : 0), 0) + (Number(selectedOrder.extra_charge) || 0))}
                                             </td>
                                         </tr>
