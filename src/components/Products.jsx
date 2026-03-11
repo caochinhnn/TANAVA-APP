@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Plus, Edit, Trash2, Search, X, DollarSign } from 'lucide-react';
+import Modal from './Modal';
 
 const Products = () => {
     const [products, setProducts] = useState([]);
@@ -164,89 +165,81 @@ const Products = () => {
             </table>
 
             {/* Product Modal */}
-            {showModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                            <h3>{editingProduct ? 'CHỈNH SỬA SẢN PHẨM' : 'THÊM SẢN PHẨM MỚI'}</h3>
-                            <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                                <X size={24} />
-                            </button>
-                        </div>
-                        <form onSubmit={handleSubmit}>
-                            <div className="form-group">
-                                <label>Tên Sản Phẩm *</label>
-                                <input name="name" value={formData.name} onChange={handleInputChange} required />
-                            </div>
-                            <div className="form-group">
-                                <label>Đơn Vị Tính</label>
-                                <input name="unit" value={formData.unit} onChange={handleInputChange} placeholder="Kg, Thùng, Bó..." />
-                            </div>
-                            <div className="form-group">
-                                <label>Đơn Giá Mặc Định</label>
-                                <input type="number" name="default_price" value={formData.default_price} onChange={handleInputChange} />
-                            </div>
-                            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                                <button type="button" className="btn" style={{ border: '1px solid #ccc' }} onClick={() => setShowModal(false)}>Hủy</button>
-                                <button type="submit" className="btn btn-primary">Lưu</button>
-                            </div>
-                        </form>
-                    </div>
+            <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                    <h3>{editingProduct ? 'CHỈNH SỬA SẢN PHẨM' : 'THÊM SẢN PHẨM MỚI'}</h3>
+                    <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                        <X size={24} />
+                    </button>
                 </div>
-            )}
+                <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label>Tên Sản Phẩm *</label>
+                        <input name="name" value={formData.name} onChange={handleInputChange} required />
+                    </div>
+                    <div className="form-group">
+                        <label>Đơn Vị Tính</label>
+                        <input name="unit" value={formData.unit} onChange={handleInputChange} placeholder="Kg, Thùng, Bó..." />
+                    </div>
+                    <div className="form-group">
+                        <label>Đơn Giá Mặc Định</label>
+                        <input type="number" name="default_price" value={formData.default_price} onChange={handleInputChange} />
+                    </div>
+                    <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                        <button type="button" className="btn" style={{ border: '1px solid #ccc' }} onClick={() => setShowModal(false)}>Hủy</button>
+                        <button type="submit" className="btn btn-primary">Lưu</button>
+                    </div>
+                </form>
+            </Modal>
 
             {/* Pricing Modal */}
-            {showPriceModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content" style={{ maxWidth: '700px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                            <h3>BẢNG GIÁ RIÊNG: {selectedProduct?.name}</h3>
-                            <button onClick={() => setShowPriceModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleAddCustomerPrice} style={{ display: 'flex', gap: '10px', marginBottom: '20px', alignItems: 'flex-end' }}>
-                            <div className="form-group" style={{ flex: 2, marginBottom: 0 }}>
-                                <label>Chọn Khách Hàng</label>
-                                <select name="customer_id" required>
-                                    <option value="">-- Chọn khách hàng --</option>
-                                    {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
-                            </div>
-                            <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-                                <label>Giá Riêng</label>
-                                <input type="number" name="price" required />
-                            </div>
-                            <button type="submit" className="btn btn-primary" style={{ height: '40px' }}>Thêm</button>
-                        </form>
-
-                        <table style={{ textAlign: 'left' }}>
-                            <thead>
-                                <tr>
-                                    <th>Tên Khách Hàng</th>
-                                    <th>Giá Áp Dụng</th>
-                                    <th>Thao Tác</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {customerPrices.map(cp => (
-                                    <tr key={cp.id}>
-                                        <td>{cp.customers?.name}</td>
-                                        <td style={{ fontWeight: 'bold' }}>{formatCurrency(cp.price)}</td>
-                                        <td>
-                                            <button onClick={() => deleteCustomerPrice(cp.id)} style={{ color: '#dc3545', background: 'none', border: 'none', cursor: 'pointer' }}>
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {customerPrices.length === 0 && <tr><td colSpan="3" style={{ textAlign: 'center', padding: '20px' }}>Chưa có giá riêng nào.</td></tr>}
-                            </tbody>
-                        </table>
-                    </div>
+            <Modal isOpen={showPriceModal} onClose={() => setShowPriceModal(false)} maxWidth="700px">
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                    <h3>BẢNG GIÁ RIÊNG: {selectedProduct?.name}</h3>
+                    <button onClick={() => setShowPriceModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                        <X size={24} />
+                    </button>
                 </div>
-            )}
+
+                <form onSubmit={handleAddCustomerPrice} style={{ display: 'flex', gap: '10px', marginBottom: '20px', alignItems: 'flex-end' }}>
+                    <div className="form-group" style={{ flex: 2, marginBottom: 0 }}>
+                        <label>Chọn Khách Hàng</label>
+                        <select name="customer_id" required>
+                            <option value="">-- Chọn khách hàng --</option>
+                            {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                    </div>
+                    <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                        <label>Giá Riêng</label>
+                        <input type="number" name="price" required />
+                    </div>
+                    <button type="submit" className="btn btn-primary" style={{ height: '40px' }}>Thêm</button>
+                </form>
+
+                <table style={{ textAlign: 'left' }}>
+                    <thead>
+                        <tr>
+                            <th>Tên Khách Hàng</th>
+                            <th>Giá Áp Dụng</th>
+                            <th>Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {customerPrices.map(cp => (
+                            <tr key={cp.id}>
+                                <td>{cp.customers?.name}</td>
+                                <td style={{ fontWeight: 'bold' }}>{formatCurrency(cp.price)}</td>
+                                <td>
+                                    <button onClick={() => deleteCustomerPrice(cp.id)} style={{ color: '#dc3545', background: 'none', border: 'none', cursor: 'pointer' }}>
+                                        <Trash2 size={16} />
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                        {customerPrices.length === 0 && <tr><td colSpan="3" style={{ textAlign: 'center', padding: '20px' }}>Chưa có giá riêng nào.</td></tr>}
+                    </tbody>
+                </table>
+            </Modal>
         </div>
     );
 };

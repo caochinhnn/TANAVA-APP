@@ -267,12 +267,10 @@ input[type=number] {
   height: 100%;
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(12px);
-  display: flex;
-  align-items: center; /* Center vertically */
-  justify-content: center;
-  z-index: 9999;
-  padding-top: 0; /* No padding at top */
-  padding-bottom: 20px;
+  display: grid;
+  place-items: center; /* Better grid centering */
+  z-index: 9991;
+  padding: 40px 20px;
   overflow-y: auto;
 }
 
@@ -287,8 +285,8 @@ input[type=number] {
   width: 90%;
   max-width: 600px;
   position: relative;
-  margin-top: 20px; /* Space from top if content is long */
-  margin-bottom: 20px; /* Space from bottom */
+  margin: auto; /* Grid centering plus safe scroll spacing */
+  margin-top: -5vh; /* Push slightly higher than true center */
 }
 
 /* Animations - Page Transitions */

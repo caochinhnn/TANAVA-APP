@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Plus, Edit, Trash2, Search, X } from 'lucide-react';
+import Modal from './Modal';
 
 const Customers = () => {
     const [customers, setCustomers] = useState([]);
@@ -88,15 +89,6 @@ const Customers = () => {
         }
     };
 
-    const openAddModal = () => {
-        setEditingCustomer(null);
-        setFormData({
-            name: '', code: '', address: '', tax_id: '',
-            delivery_location: '', receiver: '', pic: '', phone: '', email: ''
-        });
-        setShowModal(true);
-    };
-
     const openEditModal = (customer) => {
         setEditingCustomer(customer);
         setFormData({
@@ -119,146 +111,144 @@ const Customers = () => {
     );
 
     return (
-        <div className="tab-content glass-panel" style={{ padding: '30px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
-                <h2>QUẢN LÝ KHÁCH HÀNG</h2>
-                <button className="btn btn-primary" onClick={openAddModal} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Plus size={20} /> Thêm Mới
-                </button>
-            </div>
+        <>
+            <div className="tab-content glass-panel" style={{ padding: '30px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
+                    <h2>QUẢN LÝ KHÁCH HÀNG</h2>
+                    <button className="btn btn-primary" onClick={() => { setEditingCustomer(null); setFormData({ name: '', code: '', phone: '', email: '', address: '', tax_id: '', delivery_location: '', receiver: '', pic: '' }); setShowModal(true); }} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Plus size={20} /> Thêm Khách Hàng
+                    </button>
+                </div>
 
-            <div style={{ position: 'relative', marginBottom: '25px' }}>
-                <input
-                    type="text"
-                    placeholder="Tìm kiếm theo tên hoặc mã..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ paddingLeft: '45px' }}
-                />
-                <Search size={20} style={{ position: 'absolute', left: '15px', top: '12px', color: 'var(--text-muted)' }} />
-            </div>
+                <div style={{ position: 'relative', marginBottom: '25px' }}>
+                    <input
+                        type="text"
+                        placeholder="Tìm kiếm khách hàng (Tên, Mã, MST, SĐT...)"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{ paddingLeft: '45px' }}
+                    />
+                    <Search size={20} style={{ position: 'absolute', left: '15px', top: '12px', color: 'var(--text-muted)' }} />
+                </div>
 
-            {loading ? (
-                <p>Đang tải dữ liệu...</p>
-            ) : (
-                <table>
-                    <thead>
-                        <tr>
-                            <th style={{ textAlign: 'left' }}>Tên Khách Hàng</th>
-                            <th>Mã KH</th>
-                            <th>MST</th>
-                            <th>Số Điện Thoại</th>
-                            <th>Email</th>
-                            <th>Thao Tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredCustomers.map(customer => (
-                            <tr key={customer.id}>
-                                <td style={{ textAlign: 'left' }}>
-                                    <div className="row-hover-details" style={{ display: 'inline-block', position: 'relative' }}>
-                                        <span style={{ fontWeight: 'bold', cursor: 'help' }}>{customer.name}</span>
-                                        
-                                        {/* Information Overlay on Hover */}
-                                        <div className="details-tooltip glass-panel" style={{ background: 'rgba(20, 22, 26, 0.98)', border: '1px solid var(--glass-border)', boxShadow: '0 15px 45px rgba(0,0,0,0.8)' }}>
-                                            <h4 style={{ color: 'var(--primary-orange)', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '12px', fontSize: '16px' }}>
-                                                Chi Tiết Khách Hàng
-                                            </h4>
-                                            <div style={{ display: 'grid', gap: '8px', fontSize: '13px' }}>
-                                                <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Tên:</strong> {customer.name}</p>
-                                                <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Mã:</strong> {customer.code}</p>
-                                                <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Địa chỉ:</strong> {customer.address}</p>
-                                                <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>MST:</strong> {customer.tax_id}</p>
-                                                <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Địa điểm giao:</strong> {customer.delivery_location}</p>
-                                                <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Người nhận:</strong> {customer.receiver}</p>
-                                                <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Người phụ trách:</strong> {customer.pic}</p>
-                                                <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>SĐT:</strong> {customer.phone}</p>
-                                                <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Email:</strong> {customer.email}</p>
+                {loading ? (
+                    <p>Đang tải dữ liệu...</p>
+                ) : (
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style={{ textAlign: 'left' }}>Tên Khách Hàng</th>
+                                <th>Mã KH</th>
+                                <th>MST</th>
+                                <th>Số Điện Thoại</th>
+                                <th>Email</th>
+                                <th>Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredCustomers.map(customer => (
+                                <tr key={customer.id}>
+                                    <td style={{ textAlign: 'left' }}>
+                                        <div className="row-hover-details" style={{ display: 'inline-block', position: 'relative' }}>
+                                            <span style={{ fontWeight: 'bold', cursor: 'help' }}>{customer.name}</span>
+                                            
+                                            {/* Information Overlay on Hover */}
+                                            <div className="details-tooltip glass-panel" style={{ background: 'rgba(20, 22, 26, 0.98)', border: '1px solid var(--glass-border)', boxShadow: '0 15px 45px rgba(0,0,0,0.8)' }}>
+                                                <h4 style={{ color: 'var(--primary-orange)', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '12px', fontSize: '16px' }}>
+                                                    Chi Tiết Khách Hàng
+                                                </h4>
+                                                <div style={{ display: 'grid', gap: '8px', fontSize: '13px' }}>
+                                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Tên:</strong> {customer.name}</p>
+                                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Mã:</strong> {customer.code}</p>
+                                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Địa chỉ:</strong> {customer.address}</p>
+                                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>MST:</strong> {customer.tax_id}</p>
+                                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Địa điểm giao:</strong> {customer.delivery_location}</p>
+                                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Người nhận:</strong> {customer.receiver}</p>
+                                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Người phụ trách:</strong> {customer.pic}</p>
+                                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>SĐT:</strong> {customer.phone}</p>
+                                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Email:</strong> {customer.email}</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td>{customer.code}</td>
-                                <td>{customer.tax_id}</td>
-                                <td>{customer.phone}</td>
-                                <td>{customer.email}</td>
-                                <td>
-                                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                                        <button onClick={() => openEditModal(customer)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#007bff' }}>
-                                            <Edit size={18} />
-                                        </button>
-                                        <button onClick={() => handleDelete(customer.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc3545' }}>
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            )}
+                                    </td>
+                                    <td>{customer.code}</td>
+                                    <td>{customer.tax_id}</td>
+                                    <td>{customer.phone}</td>
+                                    <td>{customer.email}</td>
+                                    <td>
+                                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                                            <button onClick={() => openEditModal(customer)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#007bff' }}>
+                                                <Edit size={18} />
+                                            </button>
+                                            <button onClick={() => handleDelete(customer.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc3545' }}>
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
 
-            {showModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                            <h3>{editingCustomer ? 'CHỈNH SỬA KHÁCH HÀNG' : 'THÊM KHÁCH HÀNG MỚI'}</h3>
-                            <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                                <X size={24} />
-                            </button>
-                        </div>
-                        <form onSubmit={handleSubmit}>
-                            <div className="form-group">
-                                <label>Tên Khách Hàng *</label>
-                                <input name="name" value={formData.name} onChange={handleInputChange} required />
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                <div className="form-group">
-                                    <label>Mã KH (3 ký tự) *</label>
-                                    <input name="code" value={formData.code} onChange={handleInputChange} required maxLength={3} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Mã Số Thuế</label>
-                                    <input name="tax_id" value={formData.tax_id} onChange={handleInputChange} />
-                                </div>
-                            </div>
-                            <div className="form-group">
-                                <label>Địa Chỉ</label>
-                                <input name="address" value={formData.address} onChange={handleInputChange} />
-                            </div>
-                            <div className="form-group">
-                                <label>Địa Điểm Giao Hàng</label>
-                                <input name="delivery_location" value={formData.delivery_location} onChange={handleInputChange} />
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                <div className="form-group">
-                                    <label>Người Nhận</label>
-                                    <input name="receiver" value={formData.receiver} onChange={handleInputChange} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Người Phụ Trách</label>
-                                    <input name="pic" value={formData.pic} onChange={handleInputChange} />
-                                </div>
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                <div className="form-group">
-                                    <label>Số Điện Thoại</label>
-                                    <input name="phone" value={formData.phone} onChange={handleInputChange} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Email</label>
-                                    <input name="email" type="email" value={formData.email} onChange={handleInputChange} />
-                                </div>
-                            </div>
-                            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                                <button type="button" className="btn" style={{ border: '1px solid #ccc' }} onClick={() => setShowModal(false)}>Hủy</button>
-                                <button type="submit" className="btn btn-primary">{editingCustomer ? 'Cập Nhật' : 'Lưu Lại'}</button>
-                            </div>
-                        </form>
-                    </div>
+            <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                    <h3>{editingCustomer ? 'CHỈNH SỬA KHÁCH HÀNG' : 'THÊM KHÁCH HÀNG MỚI'}</h3>
+                    <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                        <X size={24} />
+                    </button>
                 </div>
-            )}
-        </div>
+                <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label>Tên Khách Hàng *</label>
+                        <input name="name" value={formData.name} onChange={handleInputChange} required />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                        <div className="form-group">
+                            <label>Mã KH (3 ký tự) *</label>
+                            <input name="code" value={formData.code} onChange={handleInputChange} required maxLength={3} />
+                        </div>
+                        <div className="form-group">
+                            <label>Mã Số Thuế</label>
+                            <input name="tax_id" value={formData.tax_id} onChange={handleInputChange} />
+                        </div>
+                    </div>
+                    <div className="form-group">
+                        <label>Địa Chỉ</label>
+                        <input name="address" value={formData.address} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                        <label>Địa Điểm Giao Hàng</label>
+                        <input name="delivery_location" value={formData.delivery_location} onChange={handleInputChange} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                        <div className="form-group">
+                            <label>Người Nhận</label>
+                            <input name="receiver" value={formData.receiver} onChange={handleInputChange} />
+                        </div>
+                        <div className="form-group">
+                            <label>Người Phụ Trách</label>
+                            <input name="pic" value={formData.pic} onChange={handleInputChange} />
+                        </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                        <div className="form-group">
+                            <label>Số Điện Thoại</label>
+                            <input name="phone" value={formData.phone} onChange={handleInputChange} />
+                        </div>
+                        <div className="form-group">
+                            <label>Email</label>
+                            <input name="email" type="email" value={formData.email} onChange={handleInputChange} />
+                        </div>
+                    </div>
+                    <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                        <button type="button" className="btn" style={{ border: '1px solid #ccc' }} onClick={() => setShowModal(false)}>Hủy</button>
+                        <button type="submit" className="btn btn-primary">{editingCustomer ? 'Cập Nhật' : 'Lưu Lại'}</button>
+                    </div>
+                </form>
+            </Modal>
+        </>
     );
 };
 
