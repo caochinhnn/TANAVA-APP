@@ -139,6 +139,31 @@ tr:hover td {
   background: rgba(255, 255, 255, 0.03);
 }
 
+/* Hover Details - Restore functionality */
+.row-hover-details {
+  position: relative;
+}
+
+.details-tooltip {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  width: 300px;
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: var(--transition);
+  padding: 20px;
+  margin-left: 20px;
+}
+
+.row-hover-details:hover .details-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
 /* Premium Buttons */
 .btn {
   padding: 12px 24px;
@@ -197,6 +222,12 @@ input:focus, select:focus {
   box-shadow: 0 0 0 4px rgba(255, 140, 0, 0.15);
 }
 
+/* Force dark mode for dropdown options on Windows */
+select option {
+  background-color: #1a1c22;
+  color: white;
+}
+
 /* Remove number input spinners */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
@@ -209,10 +240,19 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
-/* Modal redesign */
+/* Modal redesign - Critical Fixes */
 .modal-overlay {
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
 }
 
 .modal-content {

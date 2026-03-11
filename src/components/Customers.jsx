@@ -155,7 +155,25 @@ const Customers = () => {
                     <tbody>
                         {filteredCustomers.map(customer => (
                             <tr key={customer.id} className="row-hover-details">
-                                <td style={{ fontWeight: 'bold', textAlign: 'left' }}>{customer.name}</td>
+                                <td style={{ fontWeight: 'bold', textAlign: 'left' }}>
+                                    {customer.name}
+                                    
+                                    {/* Information Overlay on Hover - Now nested for better positioning */}
+                                    <div className="details-tooltip glass-panel" style={{ background: 'rgba(20, 22, 26, 0.95)', border: '1px solid var(--glass-border)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                                        <h4 style={{ color: 'var(--primary-orange)', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '12px' }}>
+                                            Chi Tiết Khách Hàng
+                                        </h4>
+                                        <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Tên:</strong> {customer.name}</p>
+                                        <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Mã:</strong> {customer.code}</p>
+                                        <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Địa chỉ:</strong> {customer.address}</p>
+                                        <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>MST:</strong> {customer.tax_id}</p>
+                                        <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Địa điểm giao:</strong> {customer.delivery_location}</p>
+                                        <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Người nhận:</strong> {customer.receiver}</p>
+                                        <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Người phụ trách:</strong> {customer.pic}</p>
+                                        <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>SĐT:</strong> {customer.phone}</p>
+                                        <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Email:</strong> {customer.email}</p>
+                                    </div>
+                                </td>
                                 <td>{customer.code}</td>
                                 <td>{customer.tax_id}</td>
                                 <td>{customer.phone}</td>
@@ -170,22 +188,6 @@ const Customers = () => {
                                         </button>
                                     </div>
                                 </td>
-
-                                {/* Information Overlay on Hover */}
-                                <div className="details-tooltip glass-panel" style={{ background: 'rgba(20, 22, 26, 0.95)', border: '1px solid var(--glass-border)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
-                                    <h4 style={{ color: 'var(--primary-orange)', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '12px' }}>
-                                        Chi Tiết Khách Hàng
-                                    </h4>
-                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Tên:</strong> {customer.name}</p>
-                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Mã:</strong> {customer.code}</p>
-                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Địa chỉ:</strong> {customer.address}</p>
-                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>MST:</strong> {customer.tax_id}</p>
-                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Địa điểm giao:</strong> {customer.delivery_location}</p>
-                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Người nhận:</strong> {customer.receiver}</p>
-                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Người phụ trách:</strong> {customer.pic}</p>
-                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>SĐT:</strong> {customer.phone}</p>
-                                    <p style={{ color: 'white' }}><strong style={{ color: 'var(--text-muted)' }}>Email:</strong> {customer.email}</p>
-                                </div>
                             </tr>
                         ))}
                     </tbody>

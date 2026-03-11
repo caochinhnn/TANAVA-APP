@@ -221,12 +221,12 @@ const Reports = () => {
         order.items.forEach(item => {
             detailedData.push({
                 date: order.order_date,
-                seq: order.order_code.slice(-2), // Capture sequence for sorting
-                product: item.products?.name,
-                unit: item.products?.unit,
-                qty: item.quantity_actual,
-                price: item.unit_price,
-                total: item.total_price
+                seq: (order.order_code || '00').slice(-2), // Capture sequence safely
+                product: item.products?.name || 'Sản phẩm không tên',
+                unit: item.products?.unit || '-',
+                qty: item.quantity_actual || 0,
+                price: item.unit_price || 0,
+                total: item.total_price || 0
             });
         });
     });
